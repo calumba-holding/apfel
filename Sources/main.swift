@@ -8,7 +8,7 @@ import Foundation
 
 // MARK: - Configuration
 
-let version = "0.2.0"
+let version = "0.3.0"
 let appName = "apfel"
 let modelName = "apple-foundationmodel"
 
