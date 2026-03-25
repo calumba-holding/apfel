@@ -12,8 +12,21 @@ func startGUI() {
     let port = 11434
 
     // Spawn apfel --serve as a child process
+    // Resolve the full path of the current executable
+    let selfPath: String
+    let arg0 = CommandLine.arguments[0]
+    if arg0.hasPrefix("/") {
+        selfPath = arg0
+    } else if let resolved = ProcessInfo.processInfo.environment["PATH"]?
+        .split(separator: ":").map({ "\($0)/apfel" })
+        .first(where: { FileManager.default.isExecutableFile(atPath: $0) }) {
+        selfPath = resolved
+    } else {
+        selfPath = "/usr/local/bin/apfel"
+    }
+
     let serverProcess = Process()
-    serverProcess.executableURL = URL(fileURLWithPath: CommandLine.arguments[0])
+    serverProcess.executableURL = URL(fileURLWithPath: selfPath)
     serverProcess.arguments = ["--serve", "--port", "\(port)", "--cors"]
     serverProcess.standardOutput = FileHandle.nullDevice
     serverProcess.standardError = FileHandle.nullDevice
