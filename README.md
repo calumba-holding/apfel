@@ -11,13 +11,13 @@ No API keys. No cloud. No model downloads. Runs entirely on your Mac.
 
 ## What is this
 
-Every Mac with Apple Silicon has a **built-in LLM** — Apple's on-device foundation model, shipped as part of Apple Intelligence. Apple provides the [FoundationModels framework](https://developer.apple.com/documentation/foundationmodels) (macOS 26+) to access it, but only exposes it through Siri and system features. **apfel wraps it** in a CLI, an HTTP server, and a debug GUI — so you can actually use it. All inference runs **on-device**, no network calls.
+Every Mac with Apple Silicon has a **built-in LLM** - Apple's on-device foundation model, shipped as part of Apple Intelligence. Apple provides the [FoundationModels framework](https://developer.apple.com/documentation/foundationmodels) (macOS 26+) to access it, but only exposes it through Siri and system features. **apfel wraps it** in a CLI, an HTTP server, and a debug GUI - so you can actually use it. All inference runs **on-device**, no network calls.
 
-- **UNIX tool** — `echo "summarize this" | apfel` — pipe-friendly, JSON output, exit codes, env vars
-- **OpenAI-compatible server** — `apfel --serve` — drop-in replacement at `localhost:11434`, works with any OpenAI SDK
-- **Debug GUI** — `apfel --gui` — native SwiftUI inspector for requests, responses, and streaming events
-- **Tool calling** — function calling with schema conversion, full round-trip support
-- **Zero cost** — no API keys, no cloud, no subscriptions, no rate limits, 4096-token context window
+- **UNIX tool** - `echo "summarize this" | apfel` - pipe-friendly, JSON output, exit codes, env vars
+- **OpenAI-compatible server** - `apfel --serve` - drop-in replacement at `localhost:11434`, works with any OpenAI SDK
+- **Debug GUI** - `apfel --gui` - native SwiftUI inspector for requests, responses, and streaming events
+- **Tool calling** - function calling with schema conversion, full round-trip support
+- **Zero cost** - no API keys, no cloud, no subscriptions, no rate limits, 4096-token context window
 
 ![apfel CLI](screenshots/cli.png)
 
@@ -92,7 +92,7 @@ apfel --chat
 apfel --chat -s "You are a helpful coding assistant"
 ```
 
-Context window is managed automatically — oldest messages rotate out when the 4096-token limit approaches.
+Context window is managed automatically - oldest messages rotate out when the 4096-token limit approaches.
 
 ### Debug GUI
 
@@ -106,7 +106,7 @@ Inspect every request/response, copy curl commands, view SSE streams, track toke
 
 See [`demo/`](./demo/) for real-world shell scripts powered by apfel.
 
-**[cmd](./demo/cmd)** — natural language to shell command:
+**[cmd](./demo/cmd)** - natural language to shell command:
 
 ```bash
 demo/cmd "find all .log files modified today"
@@ -116,7 +116,7 @@ demo/cmd -x "show disk usage sorted by size"   # -x = execute after confirm
 demo/cmd -c "list open ports"                   # -c = copy to clipboard
 ```
 
-**[oneliner](./demo/oneliner)** — complex pipe chains from plain English:
+**[oneliner](./demo/oneliner)** - complex pipe chains from plain English:
 
 ```bash
 demo/oneliner "sum the third column of a CSV"
@@ -126,7 +126,7 @@ demo/oneliner "count unique IPs in access.log"
 # $ awk '{print $1}' access.log | sort | uniq -c | sort -rn
 ```
 
-**[mac-narrator](./demo/mac-narrator)** — your Mac's inner monologue:
+**[mac-narrator](./demo/mac-narrator)** - your Mac's inner monologue:
 
 ```bash
 demo/mac-narrator              # one-shot: what's happening right now?
@@ -134,11 +134,11 @@ demo/mac-narrator --watch      # continuous narration every 60s
 ```
 
 Also in `demo/`:
-- **[wtd](./demo/wtd)** — "what's this directory?" — instant project orientation
-- **[explain](./demo/explain)** — explain a command, error, or code snippet
-- **[naming](./demo/naming)** — naming suggestions for functions, variables, files
-- **[port](./demo/port)** — what's using this port?
-- **[gitsum](./demo/gitsum)** — summarize recent git activity
+- **[wtd](./demo/wtd)** - "what's this directory?" - instant project orientation
+- **[explain](./demo/explain)** - explain a command, error, or code snippet
+- **[naming](./demo/naming)** - naming suggestions for functions, variables, files
+- **[port](./demo/port)** - what's using this port?
+- **[gitsum](./demo/gitsum)** - summarize recent git activity
 
 ## OpenAI API Compatibility
 
@@ -171,7 +171,7 @@ Full API spec: [openai/openai-openapi](https://github.com/openai/openai-openapi)
 | Platform | macOS 26+, Apple Silicon only |
 | Model | One model (`apple-foundationmodel`), not configurable |
 | Guardrails | Apple's safety system may block benign prompts (false positives exist) |
-| Speed | On-device inference, not cloud-scale — expect a few seconds per response |
+| Speed | On-device inference, not cloud-scale - expect a few seconds per response |
 | No embeddings | Apple's model doesn't support vector embeddings |
 | No vision | Image/multi-modal input not supported |
 
@@ -238,9 +238,9 @@ GUI (SwiftUI) ─── HTTP ────┘   ContextManager → Transcript API
 ```
 
 Built with Swift 6.3 strict concurrency. Single `Package.swift`, three targets:
-- `ApfelCore` — pure logic library (no FoundationModels dependency, unit-testable)
-- `apfel` — executable (CLI + server + GUI)
-- `apfel-tests` — 28 unit tests
+- `ApfelCore` - pure logic library (no FoundationModels dependency, unit-testable)
+- `apfel` - executable (CLI + server + GUI)
+- `apfel-tests` - 28 unit tests
 
 ## Build & Test
 

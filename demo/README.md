@@ -2,7 +2,7 @@
 
 Real-world shell scripts powered by Apple Intelligence via `apfel`.
 
-All demos work within the 4096-token context window — small input, small output, instant results.
+All demos work within the 4096-token context window - small input, small output, instant results.
 
 ## cmd
 
@@ -106,7 +106,7 @@ What's using this port? Identifies the process and explains what it is.
 **Example output:**
 
 ```
-Process 1234, named node, is listening on port 3000 — this is likely
+Process 1234, named node, is listening on port 3000 - this is likely
 a Node.js development server (Express, Next.js, or similar).
 ```
 
@@ -141,7 +141,7 @@ Your Mac's inner monologue. Narrates system state in dry British humor.
 **Example output:**
 
 ```
-[14:23:07] Ah, the eternal dance — Claude Code consuming 8.2% CPU whilst
+[14:23:07] Ah, the eternal dance - Claude Code consuming 8.2% CPU whilst
 its human presumably waits for it to finish. Meanwhile, WindowServer
 soldiers on at 3.1%, dutifully rendering pixels that nobody is looking at.
 ```

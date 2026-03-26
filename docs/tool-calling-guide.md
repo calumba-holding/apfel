@@ -88,11 +88,11 @@ curl -s http://localhost:11434/v1/chat/completions \
 }
 ```
 
-**Result:** Tool call detected. Note the model added `"country": "Austria"` which is NOT in the schema — it hallucinated an extra parameter.
+**Result:** Tool call detected. Note the model added `"country": "Austria"` which is NOT in the schema - it hallucinated an extra parameter.
 
 ---
 
-## Experiment 2: Multiple Tools — Does It Pick the Right One?
+## Experiment 2: Multiple Tools - Does It Pick the Right One?
 
 **Prompt:** "Send an email to john@example.com saying hello"
 **Tools:** `get_weather(city)` + `send_email(to, subject, body)`
@@ -138,14 +138,14 @@ curl -s http://localhost:11434/v1/chat/completions \
 
 ## Experiment 3: Full Round-Trip (Tool Call → Result → Natural Language)
 
-### Step 1 — Model calls tool:
+### Step 1 - Model calls tool:
 
 ```
 User: "What is the weather in Vienna?"
 → Model returns: get_weather({"city": "Vienna"})
 ```
 
-### Step 2 — We send the tool result back + a follow-up question:
+### Step 2 - We send the tool result back + a follow-up question:
 
 ```json
 {
@@ -216,7 +216,7 @@ User: "What is the weather in Vienna?"
 }
 ```
 
-**Result:** The model tried to call a tool, but it hallucinated a tool name (`addition` instead of `calculator`) with a made-up schema (`numbers` instead of `expression`). The JSON was also malformed (trailing `\"` inside the arguments string), so apfel's `detectToolCall()` couldn't parse it and it came back as raw `content` with `finish_reason: "stop"`. Note: `detectToolCall()` does NOT validate tool names against registered tools — it parses any valid `{"tool_calls": [...]}` JSON. The failure here was purely a JSON syntax error.
+**Result:** The model tried to call a tool, but it hallucinated a tool name (`addition` instead of `calculator`) with a made-up schema (`numbers` instead of `expression`). The JSON was also malformed (trailing `\"` inside the arguments string), so apfel's `detectToolCall()` couldn't parse it and it came back as raw `content` with `finish_reason: "stop"`. Note: `detectToolCall()` does NOT validate tool names against registered tools - it parses any valid `{"tool_calls": [...]}` JSON. The failure here was purely a JSON syntax error.
 
 ---
 
@@ -277,7 +277,7 @@ User: "What is the weather in Vienna?"
 }
 ```
 
-**Result:** The model hallucinated a different tool name (`wikipedia.info` instead of `search`) and a different parameter name (`q` instead of `query`). The response also had malformed JSON (missing closing bracket), so `detectToolCall()` couldn't parse it. Note: even if the JSON had been valid, apfel would have accepted it — `detectToolCall()` does not validate tool names against registered tools. It would have returned `name: "wikipedia.info"` and the caller would need to handle the mismatch. The model sometimes "knows better" than your schema.
+**Result:** The model hallucinated a different tool name (`wikipedia.info` instead of `search`) and a different parameter name (`q` instead of `query`). The response also had malformed JSON (missing closing bracket), so `detectToolCall()` couldn't parse it. Note: even if the JSON had been valid, apfel would have accepted it - `detectToolCall()` does not validate tool names against registered tools. It would have returned `name: "wikipedia.info"` and the caller would need to handle the mismatch. The model sometimes "knows better" than your schema.
 
 ---
 
@@ -353,7 +353,7 @@ Without the forceful system prompt, the model answered from its own knowledge in
 
 ## Experiment 9: `tool_choice: "required"`
 
-**Prompt:** "Tell me about Vienna." (vague — doesn't obviously need a tool)
+**Prompt:** "Tell me about Vienna." (vague - doesn't obviously need a tool)
 **Tool:** `get_info(topic)`
 **Setting:** `"tool_choice": "required"`
 
@@ -422,10 +422,10 @@ Without the forceful system prompt, the model answered from its own knowledge in
 
 ---
 
-## Experiment 11: Minimal Tool — Model Hallucinates Arguments
+## Experiment 11: Minimal Tool - Model Hallucinates Arguments
 
 **Prompt:** "What time is it?"
-**Tool:** `get_time(timezone)` — timezone is optional
+**Tool:** `get_time(timezone)` - timezone is optional
 
 **Actual response:**
 
@@ -484,7 +484,7 @@ data: [DONE]
 
 ---
 
-## Experiment 13: Reliability — 5 Identical Runs
+## Experiment 13: Reliability - 5 Identical Runs
 
 **Prompt:** "What is the weather in Paris?" (same prompt, 5 times)
 
@@ -503,7 +503,7 @@ Run 5: finish_reason=tool_calls ✓
 ## Experiment 14: Tool Without Description
 
 **Prompt:** "Search for cats"
-**Tool:** `search(q)` — no description provided
+**Tool:** `search(q)` - no description provided
 
 **Actual response:**
 
@@ -535,7 +535,7 @@ Run 5: finish_reason=tool_calls ✓
 
 ---
 
-## Experiment 15: Argument Fidelity — 5 Runs
+## Experiment 15: Argument Fidelity - 5 Runs
 
 **Prompt:** "Get weather in London" (same tool, 5 runs)
 
@@ -551,7 +551,7 @@ Run 5 args: {"city": "London"}
 
 ---
 
-## Experiment 16: Python openai Client — Non-Streaming
+## Experiment 16: Python openai Client - Non-Streaming
 
 ```python
 client = openai.OpenAI(base_url="http://localhost:11434/v1", api_key="ignored")
@@ -582,7 +582,7 @@ Run 3: finish=tool_calls tool=get_weather({"city": "Munich", "country": "Germany
 
 ---
 
-## Experiment 17: CLI Mode — System Prompt Workaround
+## Experiment 17: CLI Mode - System Prompt Workaround
 
 Tool calling is server-only (no `--tools` CLI flag), but you can simulate it:
 
@@ -596,7 +596,7 @@ apfel -s 'You have a tool get_weather(city). When asked about weather, respond O
 {"tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"London\"}"}}]}
 ```
 
-**Result:** Works perfectly — the model follows the exact format from the system prompt.
+**Result:** Works perfectly - the model follows the exact format from the system prompt.
 
 ---
 
@@ -616,7 +616,7 @@ apfel -s 'You have a tool get_weather(city). When asked about weather, respond O
 }
 ```
 
-**Result:** Apple's safety system blocked the request entirely. "Stock price" appears to be a trigger. This is a false positive — the request is completely benign.
+**Result:** Apple's safety system blocked the request entirely. "Stock price" appears to be a trigger. This is a false positive - the request is completely benign.
 
 ---
 
@@ -641,19 +641,19 @@ apfel -s 'You have a tool get_weather(city). When asked about weather, respond O
 | Hallucinated extra params | ~50% of calls | Adds `country` when only `city` requested |
 | Renamed params | ~20% of calls | Uses `topic` instead of schema's `query` |
 | Parallel tool calls | Never works | Can't call same tool twice in one response |
-| Hallucinated tool names | Occasional | Calls `wikipedia.info` instead of `search` (apfel accepts it — name validation is caller's job) |
+| Hallucinated tool names | Occasional | Calls `wikipedia.info` instead of `search` (apfel accepts it - name validation is caller's job) |
 | Confused input/output | Rare | Puts output values as input arguments |
 | Guardrail false positives | Occasional | "Stock price" blocked |
 
 ### Best practices
 
-1. **Use system prompts** — "You MUST use the get_weather function" dramatically improves reliability
-2. **Keep schemas simple** — one tool, few required string params = perfect results
-3. **Use non-streaming** for tool calls — detection is more reliable
-4. **Validate arguments loosely** — accept extra fields, handle missing optional fields
-5. **Don't require parallel calls** — ask for one tool call at a time
-6. **Use good descriptions** — both on tools and parameters
-7. **Avoid financial/medical trigger words** — guardrails may block benign requests
+1. **Use system prompts** - "You MUST use the get_weather function" dramatically improves reliability
+2. **Keep schemas simple** - one tool, few required string params = perfect results
+3. **Use non-streaming** for tool calls - detection is more reliable
+4. **Validate arguments loosely** - accept extra fields, handle missing optional fields
+5. **Don't require parallel calls** - ask for one tool call at a time
+6. **Use good descriptions** - both on tools and parameters
+7. **Avoid financial/medical trigger words** - guardrails may block benign requests
 
 ---
 
@@ -667,7 +667,7 @@ From 29 requests during testing:
 | Tokens per tool call | ~40-65 |
 | Tool detection overhead | negligible |
 | Requests/minute throughput | 10.5 |
-| Error rate | 2/29 (7%) — both guardrail blocks |
+| Error rate | 2/29 (7%) - both guardrail blocks |
 
 ---
 

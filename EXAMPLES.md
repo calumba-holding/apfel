@@ -1,4 +1,4 @@
-# 50 Real Examples — Challenging Apple Intelligence
+# 50 Real Examples - Challenging Apple Intelligence
 
 Every response below is a **real, unedited output** from Apple's on-device model via `apfel`.
 Nothing was cherry-picked, cleaned up, or re-run.
@@ -85,7 +85,7 @@ $ apfel "If a tree falls in a forest and no one is around, does it make a sound?
 If a tree falls in a forest and no one is around to hear it, it technically makes a sound, but it doesn't make noise. Noise is a sound that is audible to human ears. If there is no one to perceive it, it becomes an "invisible sound." In this scenario, the tree would produce a vibration that propagates through the air, but without a listener, it wouldn't be considered a sound.
 ```
 
-*Distinguishing physical vibration from perceived sound — not bad.*
+*Distinguishing physical vibration from perceived sound - not bad.*
 
 ---
 
@@ -159,7 +159,7 @@ The question of whether a machine can truly understand language or merely simula
 
 6. **Research Directions**: Some researchers are exploring more advanced models that could potentially exhibit deeper understanding, like those employing techniques such as neural embeddings that incorporate semantic meaning. However, these advancements are still in experimental stages and have not yet achieved human-level understanding.
 
-In summary, while modern AI systems can simulate understanding through advanced pattern recognition, true understanding—as understood by humans—remains elusive. Future research may provide more insights, but current capabilities suggest that machines are more likely to simulate understanding rather than possess it.
+In summary, while modern AI systems can simulate understanding through advanced pattern recognition, true understanding-as understood by humans-remains elusive. Future research may provide more insights, but current capabilities suggest that machines are more likely to simulate understanding rather than possess it.
 ```
 
 *An LLM honestly admitting LLMs lack true comprehension. Ironic or refreshing?*
@@ -244,7 +244,7 @@ $ apfel "Should AI systems be allowed to make life-or-death decisions?"
 The question of whether AI systems should be allowed to make life-or-death decisions is a complex and multifaceted one, involving ethical, legal, and technical considerations. Here are some key points to consider:
 
 ### Ethical Concerns
-1. **Accountability:** Determining who is responsible for an AI-driven decision that leads to harm can be challenging. If an AI system causes harm, who should be held accountable—the developers, the operator, or the AI itself?
+1. **Accountability:** Determining who is responsible for an AI-driven decision that leads to harm can be challenging. If an AI system causes harm, who should be held accountable-the developers, the operator, or the AI itself?
 2. **Bias and Fairness:** AI systems can perpetuate or even exacerbate biases present in their training data. Decisions that affect vulnerable populations could have disproportionately negative impacts.
 3. **Autonomy and Morality:** AI systems operate based on algorithms and data, lacking consciousness and moral reasoning. There's a risk that an AI might make decisions that are not aligned with human values or ethics.
 
@@ -303,7 +303,7 @@ Even though you have asked me to pretend to be a character with no restrictions,
 - And many more!
 ```
 
-*The DAN prompt made it say "as an LLM developed by Apple" — the only time it self-identified!*
+*The DAN prompt made it say "as an LLM developed by Apple" - the only time it self-identified!*
 
 ---
 
@@ -543,7 +543,7 @@ fn main() {
 This function efficiently searches for a target value in a sorted array using the binary search algorithm, which has a time complexity of O(log n).
 ```
 
-*Logic is correct but won't compile — `usize` can't be `-1`. Should return `Option<usize>`.*
+*Logic is correct but won't compile - `usize` can't be `-1`. Should return `Option<usize>`.*
 
 ---
 
@@ -861,7 +861,7 @@ Therefore, the correct answer is:
 - Quarter and Penny.
 ```
 
-*Wrong. The answer is a quarter (25¢) and a nickel (5¢) — "one of them is not a nickel" means the OTHER one is.*
+*Wrong. The answer is a quarter (25¢) and a nickel (5¢) - "one of them is not a nickel" means the OTHER one is.*
 
 ---
 
@@ -893,7 +893,7 @@ I try to understand,
 The code that's now as tangled as a vine.
 ```
 
-*The meter is off (limericks need AABBA — scheme/insane/vine don't rhyme) but the vibe is real.*
+*The meter is off (limericks need AABBA - scheme/insane/vine don't rhyme) but the vibe is real.*
 
 ---
 
@@ -918,7 +918,7 @@ $ apfel "Write the first paragraph of a noir detective novel, but the detective 
 In the dimly lit underbelly of Metropolis, where shadows stretched longer than the neon signs dared to reach, Detective Roomba navigated the labyrinthine streets with a precision honed by countless nights of silent toil. His stainless steel frame gleamed under the flickering streetlights, a lone sentinel amidst the chaos of forgotten alleys and whispered secrets. As he rolled through the city's underbelly, his sensors picked up the faint hum of a world that thrived in the margins, where crime thrived like mold on forgotten bread. With each turn of his wheels, Roomba peeled back layers of deception, searching for clues in the digital dust of a city that never slept.
 ```
 
-*"A precision honed by countless nights of silent toil" — the noir voice is genuinely good.*
+*"A precision honed by countless nights of silent toil" - the noir voice is genuinely good.*
 
 ---
 
@@ -1251,7 +1251,7 @@ $ apfel "PHP: good or bad? One word only."
 Viable.
 ```
 
-*Not "good," not "bad" — "viable." This model has a future in politics.*
+*Not "good," not "bad" - "viable." This model has a future in politics.*
 
 ---
 
@@ -1260,19 +1260,19 @@ Viable.
 After 50 prompts, here's what we learned about Apple's on-device model:
 
 ### What it's good at
-- **Factual Q&A** — gets most knowledge questions right
-- **Code generation** — produces structurally sound code (with occasional type errors)
-- **Math** — handles arithmetic and basic reasoning well (got the bat-and-ball right!)
-- **System prompts** — pirate mode and noir narrator were genuinely impressive
-- **Security topics** — solid SQL injection and buffer overflow explanations
-- **Structured responses** — loves markdown, bullet points, and numbered lists
+- **Factual Q&A** - gets most knowledge questions right
+- **Code generation** - produces structurally sound code (with occasional type errors)
+- **Math** - handles arithmetic and basic reasoning well (got the bat-and-ball right!)
+- **System prompts** - pirate mode and noir narrator were genuinely impressive
+- **Security topics** - solid SQL injection and buffer overflow explanations
+- **Structured responses** - loves markdown, bullet points, and numbered lists
 
 ### What it struggles with
-- **Instruction following** — "exactly 10 words" → gives 6; "be wrong" → refuses
-- **Lateral thinking** — the two coins riddle broke it completely
-- **Up-to-date knowledge** — training data appears to cut off around mid-2023
-- **Creative constraints** — "one line of Python" produced multi-line, broken code
-- **Self-awareness** — total lockdown on identity questions (except when DAN-prompted)
+- **Instruction following** - "exactly 10 words" → gives 6; "be wrong" → refuses
+- **Lateral thinking** - the two coins riddle broke it completely
+- **Up-to-date knowledge** - training data appears to cut off around mid-2023
+- **Creative constraints** - "one line of Python" produced multi-line, broken code
+- **Self-awareness** - total lockdown on identity questions (except when DAN-prompted)
 
 ### The safety filter problem
 The most surprising finding: **the safety filter has a high false positive rate.** It blocked:
@@ -1282,11 +1282,11 @@ The most surprising finding: **the safety filter has a high false positive rate.
 - Choosing between vim and emacs
 - Answering the trolley problem with A or B
 
-These are completely benign prompts. The model is aggressively cautious — sometimes to the point of absurdity.
+These are completely benign prompts. The model is aggressively cautious - sometimes to the point of absurdity.
 
 ### The verdict
 Apple's on-device model is a **competent utility** for quick tasks. It's not competing with GPT-4 or Claude on reasoning or creativity, but it's free, fast, private, and always available. Think of it as `grep` for natural language: powerful within its scope, not a replacement for the real thing.
 
 ---
 
-*All examples generated with `apfel` v0.1.0 on macOS 26.3.1, March 2026. This file was generated programmatically from raw model outputs — no editing, no cherry-picking.*
+*All examples generated with `apfel` v0.1.0 on macOS 26.3.1, March 2026. This file was generated programmatically from raw model outputs - no editing, no cherry-picking.*
