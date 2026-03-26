@@ -28,12 +28,11 @@ Without these tests, "OpenAI-compatible" is a claim, not a fact. The Python
 `openai` library is the reference client. If it works with apfel, we're done.
 This is the single most important remaining ticket.
 
-### TICKET-006: Context Summarization (P2) ← GOLDEN GOAL: CLI chat
-**VERDICT: KEEP — DOWNGRADE TO P3.**
-Current context rotation (drop oldest) works. Summarization is a quality
-improvement but not blocking. The chat doesn't crash anymore. Nice-to-have
-for long conversations but Apple's 4096 token limit means conversations are
-inherently short. Over-engineering risk.
+### ~~TICKET-006: Context Summarization~~ ← REMOVED
+**VERDICT: KILLED.** Not part of OpenAI API. Context management is the CLIENT's
+job, not the server's. The server should return `context_length_exceeded` if
+messages are too long. CLI chat already has context rotation (drop oldest) which
+is a UX feature, not API behavior. Summarization is over-engineering.
 
 ### TICKET-007: GUI Token Budget Display (P2) ← GOLDEN GOAL: Debug GUI
 **VERDICT: KEEP — P2 — Core debug feature.**
@@ -76,4 +75,3 @@ This lets shell scripts react to specific failures: `apfel "prompt" || case $? i
 4. **TICKET-009** (P3) — Env vars — quick win
 5. **TICKET-010** (P3) — `--system-file` — quick win
 6. **TICKET-011** (P3) — Exit code semantics — quick win
-7. **TICKET-006** (P3) — Context summarization — nice-to-have
