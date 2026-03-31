@@ -83,8 +83,9 @@ jobs:
           version="${{ steps.version.outputs.value }}"
           git add .version README.md Sources/BuildInfo.swift
           git commit -m "release v$version"
-          git tag "v$version"
-          git push origin HEAD:main --follow-tags
+          git tag -a "v$version" -m "v$version"
+          git push origin HEAD:main
+          git push origin "v$version"
 
       - name: Package release artifact
         id: asset

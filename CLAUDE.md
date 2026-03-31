@@ -95,3 +95,11 @@ python3 -m pytest Tests/integration/ -v    # release-binary integration tests
 | GUI | `Sources/GUI/` (SwiftUI, talks to server via HTTP) |
 | Tests | `Tests/apfelTests/` (48 unit), `Tests/integration/` (51 integration) |
 | Tickets | `open-tickets/` |
+| Docs | `docs/` (brew-install, EXAMPLES, release, tool-calling-guide) |
+
+## CI / GitHub Actions
+
+- **`macos-26` runner** has Xcode-bundled SDKs (not standalone CLT). The workflow selects the latest available Xcode via `xcode-select` before building.
+- apfel requires **SDK 26.4+** for FoundationModels token-counting APIs (`tokenCount`, `contextSize`). If the runner's highest Xcode is older, the build will fail.
+- **`HOMEBREW_TAP_PUSH_TOKEN`** secret must exist on `Arthur-Ficial/apfel` — fine-grained token with Contents R/W on `Arthur-Ficial/homebrew-tap`.
+- Release docs: `docs/release.md`
