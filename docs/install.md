@@ -12,14 +12,14 @@
 
 ```bash
 brew tap Arthur-Ficial/tap
-brew install Arthur-Ficial/tap/apfel
+brew install apfel
 ```
 
 No build tools needed. See [brew-install.md](brew-install.md) for troubleshooting.
 
 ## Option 2: Build from source
 
-Requires Swift 6.2+ with developer tools that include the **macOS 26.4 SDK**. Xcode is **not** required — Command Line Tools are enough.
+Requires Swift 6.3+ with developer tools that include the **macOS 26.4 SDK**. Xcode is **not** required - Command Line Tools are enough.
 
 ```bash
 git clone https://github.com/Arthur-Ficial/apfel.git
