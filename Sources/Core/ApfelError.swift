@@ -6,6 +6,8 @@ public enum ApfelError: Error, Equatable, Sendable {
     case rateLimited
     case concurrentRequest
     case assetsUnavailable
+    case unsupportedGuide
+    case decodingFailure(String)
     case unsupportedLanguage(String)
     case toolExecution(String)
     case unknown(String)
@@ -40,6 +42,12 @@ public enum ApfelError: Error, Equatable, Sendable {
             if mirror.contains("assetsUnavailable") {
                 return .assetsUnavailable
             }
+            if mirror.contains("unsupportedGuide") {
+                return .unsupportedGuide
+            }
+            if mirror.contains("decodingFailure") {
+                return .decodingFailure(error.localizedDescription)
+            }
         }
 
         // Fallback: string matching for unknown error types
@@ -69,6 +77,8 @@ public enum ApfelError: Error, Equatable, Sendable {
         case .rateLimited:         return "[rate limited]"
         case .concurrentRequest:   return "[busy]"
         case .assetsUnavailable:   return "[model loading]"
+        case .unsupportedGuide:    return "[unsupported guide]"
+        case .decodingFailure:     return "[decoding failure]"
         case .unsupportedLanguage: return "[unsupported language]"
         case .toolExecution:       return "[tool error]"
         case .unknown:             return "[error]"
@@ -82,6 +92,8 @@ public enum ApfelError: Error, Equatable, Sendable {
         case .rateLimited:         return "rate_limit_error"
         case .concurrentRequest:   return "rate_limit_error"
         case .assetsUnavailable:   return "server_error"
+        case .unsupportedGuide:    return "invalid_request_error"
+        case .decodingFailure:     return "server_error"
         case .unsupportedLanguage: return "invalid_request_error"
         case .toolExecution:       return "server_error"
         case .unknown:             return "server_error"
@@ -96,6 +108,8 @@ public enum ApfelError: Error, Equatable, Sendable {
         case .rateLimited:         return 429
         case .concurrentRequest:   return 429
         case .assetsUnavailable:   return 503
+        case .unsupportedGuide:    return 400
+        case .decodingFailure:     return 500
         case .unsupportedLanguage: return 400
         case .toolExecution:       return 500
         case .unknown:             return 500
@@ -114,6 +128,10 @@ public enum ApfelError: Error, Equatable, Sendable {
             return "Apple Intelligence is busy with another request. Retry shortly."
         case .assetsUnavailable:
             return "Model assets are loading. Try again in a moment."
+        case .unsupportedGuide:
+            return "The requested generation guide is not supported by this model."
+        case .decodingFailure(let msg):
+            return "Model output could not be decoded: \(msg)"
         case .unsupportedLanguage(let msg):
             return "Unsupported language: \(msg)"
         case .toolExecution(let msg):

@@ -6,6 +6,7 @@
 import FoundationModels
 import Foundation
 import ApfelCore
+import CReadline
 
 // MARK: - Chat Header
 
@@ -36,68 +37,35 @@ func singlePrompt(_ prompt: String, systemPrompt: String?, stream: Bool, options
     let mcpTools = await mcpManager?.allTools() ?? []
     let hasMCPTools = !mcpTools.isEmpty
 
-    // If MCP tools available, build session via ContextManager (same path as server)
+    debugLog("single", "prompt_length=\(prompt.count) stream=\(stream) mcp=\(hasMCPTools)")
+
     let session: LanguageModelSession
     let finalPrompt: String
     if hasMCPTools {
-        let messages: [OpenAIMessage] = {
-            var msgs: [OpenAIMessage] = []
-            if let sys = systemPrompt { msgs.append(OpenAIMessage(role: "system", content: .text(sys))) }
-            msgs.append(OpenAIMessage(role: "user", content: .text(prompt)))
-            return msgs
-        }()
+        var msgs: [OpenAIMessage] = []
+        if let sys = systemPrompt { msgs.append(OpenAIMessage(role: "system", content: .text(sys))) }
+        msgs.append(OpenAIMessage(role: "user", content: .text(prompt)))
         (session, finalPrompt) = try await ContextManager.makeSession(
-            messages: messages, tools: mcpTools, options: options, jsonMode: false, toolChoice: nil)
+            messages: msgs, tools: mcpTools, options: options, jsonMode: false, toolChoice: nil)
     } else {
         session = makeSession(systemPrompt: systemPrompt, options: options)
         finalPrompt = prompt
     }
     let genOpts = makeGenerationOptions(options)
 
-    // Get response (with tool execution loop if MCP tools present)
-    let retryMax = options.retryEnabled ? options.retryCount : 0
-    var content: String
-    if stream {
-        content = try await withRetry(maxRetries: retryMax) {
-            try await collectStream(session, prompt: finalPrompt, printDelta: !hasMCPTools && outputFormat == .plain, options: genOpts)
-        }
-    } else {
-        content = try await withRetry(maxRetries: retryMax) {
-            let response = try await session.respond(to: finalPrompt, options: genOpts)
-            return response.content
-        }
-    }
-
-    // Tool execution: detect tool call, execute via MCP, then ask model for plain text answer
-    if let result = try await executeMCPToolCalls(
-        in: content, mcpManager: mcpManager, userPrompt: prompt,
-        systemPrompt: systemPrompt, options: genOpts
-    ) {
-        content = result.content
-        if !quietMode {
-            for log in result.toolLog {
-                if log.isError {
-                    printStderr("\(styled("tool:", .red)) \(log.name) failed: \(log.result)")
-                } else {
-                    printStderr("\(styled("tool:", .cyan)) \(log.name)(\(log.args)) = \(log.result)")
-                }
-            }
-        }
-    }
+    let result = try await processPrompt(
+        prompt: finalPrompt, systemPrompt: systemPrompt, session: session,
+        options: options, genOpts: genOpts, stream: stream,
+        printDelta: outputFormat == .plain, mcpManager: mcpManager, hasMCPTools: hasMCPTools)
+    printToolLog(result.toolLog)
 
     switch outputFormat {
     case .plain:
-        if hasMCPTools || !stream {
-            print(content)
-        } else {
-            print()
-        }
+        if hasMCPTools || !stream { print(result.content) } else { print() }
     case .json:
         let obj = ApfelResponse(
-            model: modelName,
-            content: content,
-            metadata: .init(onDevice: true, version: version)
-        )
+            model: modelName, content: result.content,
+            metadata: .init(onDevice: true, version: version))
         print(jsonString(obj), terminator: "")
     }
 }
@@ -111,19 +79,33 @@ func chat(systemPrompt: String?, options: SessionOptions = .defaults, mcpManager
         exit(exitUsageError)
     }
 
+    // Keep SIGINT blocked while chat bootstraps so background threads spawned
+    // during model/session setup do not inherit an unblocked Ctrl-C.
+    apfel_block_sigint()
+
     let mcpTools = await mcpManager?.allTools() ?? []
     let hasMCPTools = !mcpTools.isEmpty
 
     let model = makeModel(permissive: options.permissive)
     var session: LanguageModelSession
     if hasMCPTools {
-        let messages: [OpenAIMessage] = {
-            var msgs: [OpenAIMessage] = []
-            if let sys = systemPrompt { msgs.append(OpenAIMessage(role: "system", content: .text(sys))) }
-            return msgs
-        }()
-        (session, _) = try await ContextManager.makeSession(
-            messages: messages, tools: mcpTools, options: options, jsonMode: false, toolChoice: nil)
+        // Build session directly with tool definitions in Instructions.
+        // Can't use ContextManager.makeSession() here because it requires a user message,
+        // and chat has no user message at init time (user hasn't typed anything yet).
+        let converted = await SchemaConverter.convert(tools: mcpTools)
+        var instrParts: [String] = []
+        if let sys = systemPrompt { instrParts.append(sys) }
+        let toolNames = mcpTools.map { $0.function.name }
+        instrParts.append(ToolCallHandler.buildOutputFormatInstructions(toolNames: toolNames))
+        instrParts.append("IMPORTANT: You may ONLY call the functions listed above (\(toolNames.joined(separator: ", "))). Do NOT invent function names. If the user's request cannot be handled by these specific functions, respond with plain text.")
+        if !converted.fallback.isEmpty {
+            instrParts.append(ToolCallHandler.buildFallbackPrompt(tools: converted.fallback))
+        }
+        let instrText = instrParts.joined(separator: "\n\n")
+        let segments: [Transcript.Segment] = [.text(Transcript.TextSegment(content: instrText))]
+        let instr = Transcript.Instructions(segments: segments, toolDefinitions: converted.native)
+        session = makeTranscriptSession(model: model, entries: [.instructions(instr)])
+        debugLog("chat", "session created with \(converted.native.count) native + \(converted.fallback.count) fallback tools")
     } else {
         session = makeSession(systemPrompt: systemPrompt, options: options)
     }
@@ -172,38 +154,13 @@ func chat(systemPrompt: String?, options: SessionOptions = .defaults, mcpManager
         }
 
         do {
-            let chatRetryMax = options.retryEnabled ? options.retryCount : 0
-            let currentSession = session  // capture by value for @Sendable closure
-            var content: String
-            switch outputFormat {
-            case .plain:
-                content = try await withRetry(maxRetries: chatRetryMax) {
-                    try await collectStream(currentSession, prompt: trimmed, printDelta: !hasMCPTools, options: genOpts)
-                }
-                if !hasMCPTools { print("\n") }
-
-            case .json:
-                content = try await withRetry(maxRetries: chatRetryMax) {
-                    try await collectStream(currentSession, prompt: trimmed, printDelta: false, options: genOpts)
-                }
-            }
-
-            // MCP tool execution: detect tool call, execute, get plain text answer
-            if hasMCPTools, let result = try await executeMCPToolCalls(
-                in: content, mcpManager: mcpManager, userPrompt: trimmed,
-                systemPrompt: systemPrompt, options: genOpts
-            ) {
-                content = result.content
-                if !quietMode {
-                    for log in result.toolLog {
-                        if log.isError {
-                            printStderr("\(styled("tool:", .red)) \(log.name) failed: \(log.result)")
-                        } else {
-                            printStderr("\(styled("tool:", .cyan)) \(log.name)(\(log.args)) = \(log.result)")
-                        }
-                    }
-                }
-            }
+            let result = try await processPrompt(
+                prompt: trimmed, systemPrompt: systemPrompt, session: session,
+                options: options, genOpts: genOpts, stream: true,
+                printDelta: outputFormat == .plain, mcpManager: mcpManager, hasMCPTools: hasMCPTools)
+            if !hasMCPTools && outputFormat == .plain { print("\n") }
+            printToolLog(result.toolLog)
+            let content = result.content
 
             switch outputFormat {
             case .plain:
@@ -223,7 +180,29 @@ func chat(systemPrompt: String?, options: SessionOptions = .defaults, mcpManager
             if tokenCount > budget {
                 do {
                     let truncated = try await truncateTranscript(transcript, budget: budget, config: options.contextConfig)
-                    session = LanguageModelSession(model: model, transcript: truncated)
+                    if hasMCPTools {
+                        // Re-inject MCP tool definitions into the truncated transcript.
+                        // Without this, tools silently stop working after context rotation.
+                        let truncEntries = transcriptEntries(truncated)
+                        var rebuilt: [Transcript.Entry] = []
+                        let converted = await SchemaConverter.convert(tools: mcpTools)
+                        if let first = truncEntries.first, case .instructions(let instr) = first {
+                            let updated = Transcript.Instructions(
+                                segments: instr.segments, toolDefinitions: converted.native)
+                            rebuilt.append(.instructions(updated))
+                            rebuilt.append(contentsOf: truncEntries.dropFirst())
+                        } else {
+                            let toolInstr = Transcript.Instructions(
+                                segments: [], toolDefinitions: converted.native)
+                            rebuilt.append(.instructions(toolInstr))
+                            rebuilt.append(contentsOf: truncEntries)
+                        }
+                        session = makeTranscriptSession(model: model, entries: rebuilt)
+                        debugLog("context", "rotated with MCP tools re-injected (\(converted.native.count) native)")
+                    } else {
+                        session = LanguageModelSession(model: model, transcript: truncated)
+                        debugLog("context", "rotated (no MCP tools)")
+                    }
                     if !quietMode && outputFormat == .plain {
                         print(styled("  [context rotated — \(options.contextConfig.strategy.rawValue)]", .dim))
                     }
@@ -455,6 +434,7 @@ func printUsage() {
           --model-info           Print model capabilities and exit
           --benchmark            Run internal performance benchmarks
           --update               Check for updates and upgrade via Homebrew
+          --debug                Enable debug logging to stderr (all modes)
       -h, --help                Show this help
       -v, --version             Print version
           --release             Show detailed release and build info
@@ -480,7 +460,7 @@ func printUsage() {
           --public-health        Keep /health unauthenticated on non-loopback binds
           --footgun              Disable all protections (--no-origin-check + --cors)
           --max-concurrent <n>   Max concurrent model requests [default: 5]
-          --debug                Verbose logging and enable /v1/logs inspector
+          --debug                (also enables /v1/logs inspector in server mode)
 
     \(styled("ENVIRONMENT:", .yellow, .bold))
       APFEL_SYSTEM_PROMPT       Default system prompt

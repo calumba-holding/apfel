@@ -1,6 +1,14 @@
 import Foundation
 import ApfelCore
 
+// Test helper: simulate FoundationModels GenerationError by name
+private struct GenErrSim: Error, LocalizedError, CustomStringConvertible {
+    let caseName: String
+    let localizedMsg: String
+    var errorDescription: String? { localizedMsg }
+    var description: String { "GenerationError.\(caseName)(Context(debugDescription: \"\(localizedMsg)\"))" }
+}
+
 func runApfelErrorTests() {
     test("guardrail keyword → .guardrailViolation") {
         let err = NSError(domain: "FM", code: 0,
@@ -80,7 +88,8 @@ func runApfelErrorTests() {
     }
     test("openAIMessage is non-empty for all cases") {
         let cases: [ApfelError] = [.guardrailViolation, .contextOverflow, .rateLimited,
-                                    .concurrentRequest, .toolExecution("tool failed"), .unknown("oops")]
+                                    .concurrentRequest, .toolExecution("tool failed"), .unknown("oops"),
+                                    .unsupportedGuide, .decodingFailure("decode failed")]
         for c in cases {
             try assertTrue(!c.openAIMessage.isEmpty, "\(c)")
         }
@@ -127,5 +136,45 @@ func runApfelErrorTests() {
         try assertEqual(err.openAIType, "invalid_request_error")
         try assertEqual(err.cliLabel, "[unsupported language]")
         try assertTrue(err.openAIMessage.contains("Klingon"))
+    }
+
+    // --- unsupportedGuide (#41) ---
+
+    test("unsupportedGuide error properties") {
+        let err = ApfelError.unsupportedGuide
+        try assertEqual(err.cliLabel, "[unsupported guide]")
+        try assertEqual(err.openAIType, "invalid_request_error")
+        try assertEqual(err.httpStatusCode, 400)
+        try assertTrue(!err.openAIMessage.isEmpty)
+        try assertTrue(!err.isRetryable)
+    }
+    test("classify detects GenerationError.unsupportedGuide") {
+        let err = GenErrSim(caseName: "unsupportedGuide", localizedMsg: "Nicht unterstuetzte Anleitung")
+        try assertEqual(ApfelError.classify(err), .unsupportedGuide)
+    }
+    test("classify passthrough for unsupportedGuide") {
+        try assertEqual(ApfelError.classify(ApfelError.unsupportedGuide), .unsupportedGuide)
+    }
+
+    // --- decodingFailure (#41) ---
+
+    test("decodingFailure error properties") {
+        let err = ApfelError.decodingFailure("bad output")
+        try assertEqual(err.cliLabel, "[decoding failure]")
+        try assertEqual(err.openAIType, "server_error")
+        try assertEqual(err.httpStatusCode, 500)
+        try assertTrue(err.openAIMessage.contains("bad output"))
+        try assertTrue(!err.isRetryable)
+    }
+    test("classify detects GenerationError.decodingFailure") {
+        let err = GenErrSim(caseName: "decodingFailure", localizedMsg: "Dekodierungsfehler")
+        if case .decodingFailure = ApfelError.classify(err) { } else {
+            throw TestFailure("expected .decodingFailure")
+        }
+    }
+    test("classify passthrough for decodingFailure") {
+        if case .decodingFailure = ApfelError.classify(ApfelError.decodingFailure("x")) { } else {
+            throw TestFailure("expected .decodingFailure passthrough")
+        }
     }
 }

@@ -52,4 +52,21 @@ func runContextStrategyTests() {
     test("ContextConfig zero-arg init matches defaults") {
         try assertTrue(ContextConfig() == ContextConfig.defaults)
     }
+
+    test("ContextConfig permissive defaults to false") {
+        let cfg = ContextConfig.defaults
+        try assertEqual(cfg.permissive, false)
+    }
+
+    test("ContextConfig permissive can be set to true") {
+        let cfg = ContextConfig(strategy: .summarize, maxTurns: nil, outputReserve: 512, permissive: true)
+        try assertEqual(cfg.permissive, true)
+        try assertEqual(cfg.strategy, .summarize)
+    }
+
+    test("ContextConfig permissive affects equality") {
+        let a = ContextConfig(strategy: .newestFirst, permissive: false)
+        let b = ContextConfig(strategy: .newestFirst, permissive: true)
+        try assertTrue(a != b)
+    }
 }

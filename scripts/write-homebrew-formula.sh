@@ -41,18 +41,24 @@ class Apfel < Formula
   license "MIT"
 
   def install
-    odie "apfel requires Apple Silicon." unless Hardware::CPU.arm?
-
     bin.install "apfel"
   end
 
   def caveats
-    <<~EOS
+    s = <<~EOS
       apfel runs entirely on-device and requires Apple Intelligence to be enabled.
 
       Check model availability with:
         apfel --model-info
     EOS
+    unless Hardware::CPU.arm?
+      s += <<~EOS
+
+        WARNING: This binary was built for Apple Silicon (arm64).
+        It may not work on this architecture.
+      EOS
+    end
+    s
   end
 
   test do

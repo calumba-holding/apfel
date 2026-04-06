@@ -4,6 +4,7 @@
 // ============================================================================
 
 import Foundation
+import ApfelCore
 
 // MARK: - Output Format
 
@@ -66,4 +67,18 @@ func printStderr(_ message: String) {
 /// Print a styled error message to stderr. Format: "error: <message>"
 func printError(_ message: String) {
     stderr.write(Data("\(styled("error:", .red, .bold)) \(message)\n".utf8))
+}
+
+// MARK: - Debug Output
+
+/// Print a debug message to stderr. Zero-cost when apfelDebugEnabled is false.
+func debugLog(_ message: @autoclosure () -> String) {
+    guard apfelDebugEnabled else { return }
+    printStderr("\(styled("debug:", .dim)) \(message())")
+}
+
+/// Print a categorized debug message to stderr. Zero-cost when apfelDebugEnabled is false.
+func debugLog(_ category: String, _ message: @autoclosure () -> String) {
+    guard apfelDebugEnabled else { return }
+    printStderr("\(styled("debug[\(category)]:", .dim)) \(message())")
 }

@@ -154,9 +154,10 @@ func runMCPClientTests() {
                 parametersJSON: tool.function.parameters?.value
             )
         }
-        let instructions = ToolCallHandler.buildSystemPrompt(tools: toolDefs)
-        try assertTrue(instructions.contains("get_boards"), "system prompt must contain tool name")
-        try assertTrue(instructions.contains("tool_calls"), "system prompt must contain call format")
+        let instructions = ToolCallHandler.buildFallbackPrompt(tools: toolDefs)
+        let format = ToolCallHandler.buildOutputFormatInstructions(toolNames: toolDefs.map(\.name))
+        try assertTrue(instructions.contains("get_boards"), "fallback prompt must contain tool name")
+        try assertTrue(format.contains("tool_calls"), "format instructions must contain call format")
     }
 
     test("tool call detection works on streamed chat responses") {
@@ -170,16 +171,17 @@ func runMCPClientTests() {
         try assertEqual(calls!.first?.id, "call_chat1")
     }
 
-    test("tool result formatting works for multi-turn chat context") {
-        // After executing a tool in chat mode, the result must be formatted
-        // for injection into the next turn's context.
-        let result = ToolCallHandler.formatToolResult(
-            callId: "call_chat1",
+    test("ToolLogEntry captures tool execution for multi-turn chat context") {
+        // After executing a tool in chat mode, the result is captured in a ToolLogEntry
+        let entry = ToolLogEntry(
             name: "get_boards",
-            content: "[{\"id\": 1, \"name\": \"Sprint Board\"}]"
+            args: "{}",
+            result: "[{\"id\": 1, \"name\": \"Sprint Board\"}]",
+            isError: false
         )
-        try assertTrue(result.contains("get_boards"), "result must reference tool name")
-        try assertTrue(result.contains("Sprint Board"), "result must contain tool output")
+        try assertEqual(entry.name, "get_boards")
+        try assertTrue(entry.result.contains("Sprint Board"), "entry must contain tool output")
+        try assertTrue(!entry.isError)
     }
 
     test("MCP tools from multiple servers merge for chat session") {
@@ -204,7 +206,7 @@ func runMCPClientTests() {
                 parametersJSON: tool.function.parameters?.value
             )
         }
-        let instructions = ToolCallHandler.buildSystemPrompt(tools: toolDefs)
+        let instructions = ToolCallHandler.buildFallbackPrompt(tools: toolDefs)
         try assertTrue(instructions.contains("add"), "combined prompt must contain first tool")
         try assertTrue(instructions.contains("multiply"), "combined prompt must contain second tool")
     }

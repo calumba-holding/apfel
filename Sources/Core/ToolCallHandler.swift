@@ -13,6 +13,28 @@ public struct ToolDef: Sendable {
     }
 }
 
+/// Result of executing a prompt through the unified processPrompt() pipeline.
+public struct ProcessPromptResult: Sendable {
+    public let content: String
+    public let toolLog: [ToolLogEntry]
+
+    public init(content: String, toolLog: [ToolLogEntry]) {
+        self.content = content; self.toolLog = toolLog
+    }
+}
+
+/// A log entry from executing a tool call.
+public struct ToolLogEntry: Sendable, Equatable {
+    public let name: String
+    public let args: String
+    public let result: String
+    public let isError: Bool
+
+    public init(name: String, args: String, result: String, isError: Bool) {
+        self.name = name; self.args = args; self.result = result; self.isError = isError
+    }
+}
+
 /// A parsed tool call extracted from model output.
 public struct ParsedToolCall: Sendable {
     public let id: String
@@ -42,18 +64,6 @@ public enum ToolCallHandler {
         """
     }
 
-    /// Build the full tool-calling instruction block (convenience — combines format + schemas).
-    /// Used when ALL tools need text injection (no native ToolDefinitions).
-    public static func buildSystemPrompt(tools: [ToolDef]) -> String {
-        return """
-        ## Available Functions
-        \(toolCallResponseFormat())
-
-        Available functions:
-        \(serializedToolSchemas(tools))
-        """
-    }
-
     // MARK: - Tool Call Detection
 
     /// Detect and parse tool calls from model output.
@@ -66,13 +76,6 @@ public enum ToolCallHandler {
             }
         }
         return nil
-    }
-
-    // MARK: - Tool Result Formatting
-
-    /// Format a tool result for injection into conversation history.
-    public static func formatToolResult(callId: String, name: String, content: String) -> String {
-        "[Function result for \(name) (id: \(callId))]: \(content)"
     }
 
     // MARK: - Private Helpers

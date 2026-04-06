@@ -55,27 +55,23 @@ func runToolCallHandlerTests() {
         try assertEqual(result!.count, 2)
     }
 
-    // MARK: - System prompt building
+    // MARK: - System prompt building (production paths)
 
-    test("buildSystemPrompt contains function names") {
-        let tools = [
-            ToolDef(name: "get_weather", description: "Get weather", parametersJSON: #"{"type":"object"}"#),
-            ToolDef(name: "search_web", description: "Search the web", parametersJSON: nil),
-        ]
-        let prompt = ToolCallHandler.buildSystemPrompt(tools: tools)
-        try assertTrue(prompt.contains("get_weather"), "missing get_weather")
-        try assertTrue(prompt.contains("search_web"), "missing search_web")
-        try assertTrue(prompt.contains("tool_calls"), "missing tool_calls keyword")
-        try assertTrue(prompt.contains("JSON"), "missing JSON instruction")
+    test("buildOutputFormatInstructions contains function names and format") {
+        let instr = ToolCallHandler.buildOutputFormatInstructions(toolNames: ["get_weather", "search_web"])
+        try assertTrue(instr.contains("get_weather"), "missing get_weather")
+        try assertTrue(instr.contains("search_web"), "missing search_web")
+        try assertTrue(instr.contains("tool_calls"), "missing tool_calls keyword")
+        try assertTrue(instr.contains("JSON"), "missing JSON instruction")
     }
-    test("buildSystemPrompt with description") {
+    test("buildFallbackPrompt with description") {
         let tools = [ToolDef(name: "fn", description: "Does a thing", parametersJSON: nil)]
-        let prompt = ToolCallHandler.buildSystemPrompt(tools: tools)
+        let prompt = ToolCallHandler.buildFallbackPrompt(tools: tools)
         try assertTrue(prompt.contains("Does a thing"))
     }
-    test("buildSystemPrompt without description still works") {
+    test("buildFallbackPrompt without description still works") {
         let tools = [ToolDef(name: "fn", description: nil, parametersJSON: nil)]
-        let prompt = ToolCallHandler.buildSystemPrompt(tools: tools)
+        let prompt = ToolCallHandler.buildFallbackPrompt(tools: tools)
         try assertTrue(prompt.contains("fn"))
     }
 
@@ -103,11 +99,11 @@ func runToolCallHandlerTests() {
         try assertEqual(result!.first?.name, "add")
     }
 
-    // MARK: - JSON escaping in buildSystemPrompt
+    // MARK: - JSON escaping in buildFallbackPrompt
 
-    test("buildSystemPrompt escapes special characters in descriptions") {
+    test("buildFallbackPrompt escapes special characters in descriptions") {
         let tools = [ToolDef(name: "fn", description: #"Get the "current" weather\today"#, parametersJSON: nil)]
-        let prompt = ToolCallHandler.buildSystemPrompt(tools: tools)
+        let prompt = ToolCallHandler.buildFallbackPrompt(tools: tools)
         try assertTrue(prompt.contains("current"), "missing description content")
         // Find the JSON array in the output and validate it parses
         if let startRange = prompt.range(of: "\n["),
@@ -121,18 +117,6 @@ func runToolCallHandlerTests() {
                 throw TestFailure("Generated JSON is not valid — special characters broke escaping")
             }
         }
-    }
-
-    // MARK: - Tool result formatting
-
-    test("formatToolResult contains name and content") {
-        let result = ToolCallHandler.formatToolResult(callId: "c1", name: "get_weather", content: "Sunny, 22°C")
-        try assertTrue(result.contains("get_weather"), "missing name")
-        try assertTrue(result.contains("Sunny, 22°C"), "missing content")
-    }
-    test("formatToolResult contains call ID") {
-        let result = ToolCallHandler.formatToolResult(callId: "call_xyz", name: "fn", content: "ok")
-        try assertTrue(result.contains("call_xyz"))
     }
 
     // MARK: - Plain string arguments (TICKET-013)
@@ -262,30 +246,65 @@ func runToolCallHandlerTests() {
         try assertNil(first["parameters"])
     }
 
-    test("buildSystemPrompt preserves parsed parameters JSON") {
+    test("buildFallbackPrompt preserves parsed parameters JSON") {
         let tools = [ToolDef(
             name: "get_weather",
             description: "Weather lookup",
             parametersJSON: #"{"type":"object","properties":{"city":{"type":"string"}}}"#
         )]
-        let prompt = ToolCallHandler.buildSystemPrompt(tools: tools)
+        let prompt = ToolCallHandler.buildFallbackPrompt(tools: tools)
         guard let json = extractToolSchemaJSON(from: prompt),
               let data = json.data(using: .utf8),
               let parsed = try JSONSerialization.jsonObject(with: data) as? [[String: Any]],
               let parameters = parsed.first?["parameters"] as? [String: Any] else {
-            throw TestFailure("Failed to parse system prompt schema JSON")
+            throw TestFailure("Failed to parse fallback prompt schema JSON")
         }
         try assertEqual(parameters["type"] as? String, "object")
         try assertNotNil(parameters["properties"])
     }
 
-    test("buildFallbackPrompt and buildSystemPrompt serialize schemas identically") {
-        let tools = [
-            ToolDef(name: "fn", description: "Does stuff", parametersJSON: #"{"type":"object"}"#),
-            ToolDef(name: "other", description: nil, parametersJSON: nil),
-        ]
-        let fallbackJSON = extractToolSchemaJSON(from: ToolCallHandler.buildFallbackPrompt(tools: tools))
-        let systemJSON = extractToolSchemaJSON(from: ToolCallHandler.buildSystemPrompt(tools: tools))
-        try assertEqual(fallbackJSON, systemJSON)
+    test("buildOutputFormatInstructions references tool_calls JSON format") {
+        let instr = ToolCallHandler.buildOutputFormatInstructions(toolNames: ["calc", "search"])
+        try assertTrue(instr.contains("tool_calls"), "must describe tool_calls JSON format")
+        try assertTrue(instr.contains("calc"), "must list tool names")
+        try assertTrue(instr.contains("search"), "must list tool names")
+    }
+
+    // MARK: - ToolLogEntry
+
+    test("ToolLogEntry stores tool execution result") {
+        let entry = ToolLogEntry(name: "calc", args: "{\"a\":1}", result: "42", isError: false)
+        try assertEqual(entry.name, "calc")
+        try assertEqual(entry.args, "{\"a\":1}")
+        try assertEqual(entry.result, "42")
+        try assertEqual(entry.isError, false)
+    }
+    test("ToolLogEntry stores error result") {
+        let entry = ToolLogEntry(name: "fail", args: "{}", result: "timeout", isError: true)
+        try assertTrue(entry.isError)
+        try assertEqual(entry.name, "fail")
+    }
+    test("ToolLogEntry is Equatable") {
+        let a = ToolLogEntry(name: "add", args: "{}", result: "3", isError: false)
+        let b = ToolLogEntry(name: "add", args: "{}", result: "3", isError: false)
+        try assertEqual(a, b)
+    }
+
+    // MARK: - ProcessPromptResult
+
+    test("ProcessPromptResult with empty toolLog") {
+        let result = ProcessPromptResult(content: "hello", toolLog: [])
+        try assertEqual(result.content, "hello")
+        try assertTrue(result.toolLog.isEmpty)
+    }
+    test("ProcessPromptResult with populated toolLog") {
+        let log = ToolLogEntry(name: "add", args: "{\"a\":1,\"b\":2}", result: "3", isError: false)
+        let result = ProcessPromptResult(content: "The sum is 3", toolLog: [log])
+        try assertEqual(result.toolLog.count, 1)
+        try assertEqual(result.toolLog[0].name, "add")
+    }
+    test("ProcessPromptResult content can be empty") {
+        let result = ProcessPromptResult(content: "", toolLog: [])
+        try assertTrue(result.content.isEmpty)
     }
 }

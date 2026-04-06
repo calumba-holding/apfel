@@ -17,15 +17,18 @@ public struct ContextConfig: Sendable, Equatable {
     public let strategy: ContextStrategy
     public let maxTurns: Int?
     public let outputReserve: Int
+    public let permissive: Bool
 
     public init(
         strategy: ContextStrategy = .newestFirst,
         maxTurns: Int? = nil,
-        outputReserve: Int = 512
+        outputReserve: Int = 512,
+        permissive: Bool = false
     ) {
         self.strategy = strategy
         self.maxTurns = maxTurns
         self.outputReserve = outputReserve
+        self.permissive = permissive
     }
 
     public static let defaults = ContextConfig()

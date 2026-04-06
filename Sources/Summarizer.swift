@@ -14,7 +14,8 @@ import ApfelCore
 /// Falls back to newest-first if summarization fails or budget is too tight.
 func trimWithSummary(
     base: [Transcript.Entry], history: [Transcript.Entry],
-    final: Transcript.Entry?, budget: Int
+    final: Transcript.Entry?, budget: Int,
+    permissive: Bool = false
 ) async -> [Transcript.Entry] {
     guard history.count > 2 else {
         return await trimNewestFirst(
@@ -44,7 +45,7 @@ func trimWithSummary(
     }
 
     // Summarize using the on-device model
-    let summaryText = await generateSummary(oldText)
+    let summaryText = await generateSummary(oldText, permissive: permissive)
     guard let summaryText else {
         return await trimNewestFirst(
             base: base, history: history, final: final, budget: budget)
@@ -75,8 +76,8 @@ private func renderEntries(_ entries: [Transcript.Entry]) -> String {
     }.joined(separator: "\n")
 }
 
-private func generateSummary(_ text: String) async -> String? {
-    let model = SystemLanguageModel.default
+private func generateSummary(_ text: String, permissive: Bool = false) async -> String? {
+    let model = makeModel(permissive: permissive)
     let session = LanguageModelSession(
         model: model,
         instructions: "Summarize the following conversation in 2-3 sentences. Be concise."

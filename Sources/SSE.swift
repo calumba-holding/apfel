@@ -47,22 +47,6 @@ func sseContentChunk(id: String, created: Int, content: String) -> ChatCompletio
     )
 }
 
-/// Create the final SSE chunk with finish_reason.
-func sseStopChunk(id: String, created: Int) -> ChatCompletionChunk {
-    ChatCompletionChunk(
-        id: id,
-        object: "chat.completion.chunk",
-        created: created,
-        model: modelName,
-        choices: [.init(
-            index: 0,
-            delta: .init(role: nil, content: nil, tool_calls: nil),
-            finish_reason: "stop"
-        )],
-        usage: nil
-    )
-}
-
 /// Create a usage-only SSE chunk (empty choices, usage stats).
 func sseUsageChunk(id: String, created: Int, promptTokens: Int, completionTokens: Int) -> ChatCompletionChunk {
     ChatCompletionChunk(

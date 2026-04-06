@@ -6,6 +6,7 @@
 
 import Foundation
 import ApfelCore
+import CReadline
 
 // MARK: - Configuration
 
@@ -31,6 +32,8 @@ func exitCode(for error: ApfelError) -> Int32 {
     case .rateLimited:         return exitRateLimited
     case .concurrentRequest:   return exitRateLimited
     case .assetsUnavailable:   return exitRuntimeError
+    case .unsupportedGuide:    return exitRuntimeError
+    case .decodingFailure:     return exitRuntimeError
     case .unsupportedLanguage: return exitRuntimeError
     case .toolExecution:       return exitRuntimeError
     case .unknown:             return exitRuntimeError
@@ -39,13 +42,7 @@ func exitCode(for error: ApfelError) -> Int32 {
 
 // MARK: - Signal Handling
 
-signal(SIGINT) { _ in
-    if isatty(STDOUT_FILENO) != 0 {
-        FileHandle.standardOutput.write(Data("\u{001B}[0m".utf8))
-    }
-    FileHandle.standardError.write(Data("\n".utf8))
-    _exit(130)
-}
+apfel_install_sigint_exit_handler(isatty(STDOUT_FILENO) != 0 ? 1 : 0)
 
 // MARK: - Argument Parsing
 
@@ -189,6 +186,7 @@ while i < args.count {
 
     case "--debug":
         serverDebug = true
+        apfelDebugEnabled = true
 
     case "--allowed-origins":
         i += 1
@@ -372,7 +370,8 @@ if !fileContents.isEmpty {
 let contextConfig = ContextConfig(
     strategy: cliContextStrategy ?? .newestFirst,
     maxTurns: cliContextMaxTurns,
-    outputReserve: cliContextOutputReserve ?? 512
+    outputReserve: cliContextOutputReserve ?? 512,
+    permissive: cliPermissive
 )
 
 let sessionOpts = SessionOptions(

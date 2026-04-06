@@ -164,7 +164,8 @@ func trimHistoryEntriesToBudget(
             budget: budget, maxTurns: config.maxTurns)
     case .summarize:
         return await trimWithSummary(
-            base: baseEntries, history: historyEntries, final: finalEntry, budget: budget)
+            base: baseEntries, history: historyEntries, final: finalEntry, budget: budget,
+            permissive: config.permissive)
     case .strict:
         // No trimming — return all history or nil if it exceeds budget
         let all = assembleTranscriptEntries(base: baseEntries, history: historyEntries, final: finalEntry)
@@ -215,6 +216,64 @@ func trimSlidingWindow(
     // Apply token-budget safety net (drop from front if over budget)
     return await trimNewestFirst(
         base: base, history: windowed, final: final, budget: budget)
+}
+
+// MARK: - Unified Prompt Processing (shared by singlePrompt and chat)
+
+/// Unified prompt execution: retry + streaming/non-streaming + MCP tool execution.
+/// Used by BOTH singlePrompt() and chat() - ONE code path, no duplication.
+func processPrompt(
+    prompt: String,
+    systemPrompt: String?,
+    session: LanguageModelSession,
+    options: SessionOptions,
+    genOpts: GenerationOptions,
+    stream: Bool,
+    printDelta: Bool,
+    mcpManager: MCPManager?,
+    hasMCPTools: Bool
+) async throws -> ProcessPromptResult {
+    let retryMax = options.retryEnabled ? options.retryCount : 0
+
+    debugLog("prompt", "stream=\(stream) retry=\(retryMax) mcp=\(hasMCPTools)")
+
+    var content: String
+    if stream {
+        content = try await withRetry(maxRetries: retryMax) {
+            try await collectStream(session, prompt: prompt, printDelta: printDelta && !hasMCPTools, options: genOpts)
+        }
+    } else {
+        content = try await withRetry(maxRetries: retryMax) {
+            let response = try await session.respond(to: prompt, options: genOpts)
+            return response.content
+        }
+    }
+
+    debugLog("response", "length=\(content.count)")
+
+    var toolLog: [ToolLogEntry] = []
+    if let result = try await executeMCPToolCalls(
+        in: content, mcpManager: mcpManager, userPrompt: prompt,
+        systemPrompt: systemPrompt, options: genOpts
+    ) {
+        content = result.content
+        toolLog = result.toolLog.map { ToolLogEntry(name: $0.name, args: $0.args, result: $0.result, isError: $0.isError) }
+        debugLog("mcp", "executed \(toolLog.count) tool calls")
+    }
+
+    return ProcessPromptResult(content: content, toolLog: toolLog)
+}
+
+/// Print tool execution log entries to stderr.
+func printToolLog(_ toolLog: [ToolLogEntry]) {
+    guard !quietMode else { return }
+    for log in toolLog {
+        if log.isError {
+            printStderr("\(styled("tool:", .red)) \(log.name) failed: \(log.result)")
+        } else {
+            printStderr("\(styled("tool:", .cyan)) \(log.name)(\(log.args)) = \(log.result)")
+        }
+    }
 }
 
 // MARK: - MCP Tool Execution (shared by CLI and server)

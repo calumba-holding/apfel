@@ -54,12 +54,21 @@ HTTP Server (/v1/*) ───────┘   ContextManager → Transcript API
 
 ## Current Status
 
-- Version source of truth: `.version` (currently `0.8.8`)
-- Tests: `188` unit + `139` integration (full suite ~60 seconds)
-- Issues `#33` through `#40` are closed
-- `--retry [n]` flag added in v0.8.7 (locale-safe error detection, exponential backoff)
-- CORS fix in v0.8.6 (echoes Access-Control-Request-Headers for OpenAI SDK compatibility)
-- MCP chat fix in v0.8.6 (tools now work in `--chat` mode)
+- Version source of truth: `.version` (currently `0.9.0`)
+- Tests: `203` unit + `174` integration (full suite ~90 seconds)
+- Issues `#33` through `#45` addressed
+- v0.9.0: The Unification Refactor
+  - Shared `processPrompt()` eliminates 5 duplicated code blocks between `singlePrompt()` and `chat()`
+  - Chat+MCP crash fixed (#43): session created without requiring user message at init
+  - `--debug` flag works in all modes (CLI, chat, server) - debug output to stderr (#44)
+  - Ctrl-C exits chat cleanly (SIGINT handled via C shim around libedit)
+  - Missing `ApfelError` cases: `unsupportedGuide`, `decodingFailure` (#41)
+  - Context rotation bug fixed: MCP tools re-injected after rotation
+  - Summarizer uses `makeModel(permissive:)` instead of `SystemLanguageModel.default`
+  - Dead code removed: `sseStopChunk()`, `buildSystemPrompt()`, `formatToolResult()`
+  - Homebrew formula: ARM check moved from hard error to caveats warning (#45)
+  - 35 new chat integration tests (startup, exit, MCP, debug, JSON, Ctrl-C, multi-turn)
+  - Integration test conftest auto-starts servers
 
 ## Build & Test
 

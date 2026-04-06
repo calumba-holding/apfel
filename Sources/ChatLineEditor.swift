@@ -49,7 +49,7 @@ final class ChatLineEditor: @unchecked Sendable {
     }
 
     func readLine(prompt: String) -> String? {
-        guard let rawLine = prompt.withCString({ readline($0) }) else {
+        guard let rawLine = prompt.withCString({ apfel_readline_interruptible($0) }) else {
             return nil
         }
         defer { free(rawLine) }

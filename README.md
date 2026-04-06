@@ -1,6 +1,6 @@
 # apfel
 
-[![Version 0.8.8](https://img.shields.io/badge/version-0.8.8-blue)](https://github.com/Arthur-Ficial/apfel)
+[![Version 0.9.12](https://img.shields.io/badge/version-0.9.12-blue)](https://github.com/Arthur-Ficial/apfel)
 [![Swift 6.3+](https://img.shields.io/badge/Swift-6.3%2B-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![macOS 26+](https://img.shields.io/badge/macOS-26%2B-000000?logo=apple&logoColor=white)](https://developer.apple.com/macos/)
 [![No Xcode Required](https://img.shields.io/badge/Xcode-not%20required-orange)](https://developer.apple.com/xcode/resources/)
@@ -354,6 +354,8 @@ MODEL
   --seed <n>                              Random seed for reproducibility
   --max-tokens <n>                        Maximum response tokens
   --permissive                            Use permissive content guardrails
+  --retry [n]                             Retry transient errors with backoff (default: 3)
+  --debug                                 Enable debug logging to stderr (all modes)
 
 CONTEXT (--chat)
   --context-strategy <s>                  newest-first, oldest-first, sliding-window, summarize, strict
@@ -425,6 +427,12 @@ apfel --max-tokens 10 "Say something short"
 
 # --permissive — relax content guardrails
 apfel --permissive "Write a villain monologue"
+
+# --retry — retry transient errors with exponential backoff
+apfel --retry "What is 2+2?"
+
+# --debug — verbose debug logging to stderr
+apfel --debug "Hello world"
 
 # --stream — stream response tokens as they arrive
 apfel --stream "Write a haiku about code"
