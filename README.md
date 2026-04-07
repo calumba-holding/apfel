@@ -196,35 +196,6 @@ echo "some text" | apfel "Summarize this"
 echo "extra context" | apfel -f code.swift "Explain this code with the context above"
 ```
 
-## MCP Tool Support
-
-Attach [MCP](https://modelcontextprotocol.io/) tool servers with `--mcp`. apfel discovers tools, executes them automatically, and returns the final answer. No glue code needed.
-
-```bash
-apfel --mcp ./mcp/calculator/server.py "What is 15 times 27?"
-```
-
-```
-mcp: ./mcp/calculator/server.py - add, subtract, multiply, divide, sqrt, power    ← stderr
-tool: multiply({"a": 15, "b": 27}) = 405                                          ← stderr
-15 times 27 is 405.                                                                ← stdout
-```
-
-Tool discovery and call info goes to stderr (visible in terminal, invisible when piped). Only the answer goes to stdout. Use `-q` to suppress tool info entirely.
-
-```bash
-# Multiple MCP servers (bring your own)
-apfel --mcp ./server_a.py --mcp ./server_b.py "Use both tools"
-
-# Server mode - tools auto-available to all clients
-apfel --serve --mcp ./mcp/calculator/server.py
-
-# No --mcp = exactly as before. Zero overhead.
-apfel "What is 2+2?"
-```
-
-Ships with a calculator MCP server at `mcp/calculator/`. See [MCP docs](docs/mcp-calculator.md) for details and how to build your own.
-
 ## Demos
 
 See [`demo/`](./demo/) for real-world shell scripts powered by apfel.
@@ -290,6 +261,35 @@ apfel-gui
 Native macOS SwiftUI app for debugging and chatting with Apple Intelligence. Debug inspector with full request/response timeline, MCP JSON-RPC protocol viewer, live request logs, model settings, speech-to-text, text-to-speech - all on-device.
 
 **[Full documentation and features in the apfel-gui repo ->](https://github.com/Arthur-Ficial/apfel-gui)**
+
+## MCP Tool Support
+
+Attach [MCP](https://modelcontextprotocol.io/) tool servers with `--mcp`. apfel discovers tools, executes them automatically, and returns the final answer. No glue code needed.
+
+```bash
+apfel --mcp ./mcp/calculator/server.py "What is 15 times 27?"
+```
+
+```
+mcp: ./mcp/calculator/server.py - add, subtract, multiply, divide, sqrt, power    ← stderr
+tool: multiply({"a": 15, "b": 27}) = 405                                          ← stderr
+15 times 27 is 405.                                                                ← stdout
+```
+
+Tool discovery and call info goes to stderr (visible in terminal, invisible when piped). Only the answer goes to stdout. Use `-q` to suppress tool info entirely.
+
+```bash
+# Multiple MCP servers (bring your own)
+apfel --mcp ./server_a.py --mcp ./server_b.py "Use both tools"
+
+# Server mode - tools auto-available to all clients
+apfel --serve --mcp ./mcp/calculator/server.py
+
+# No --mcp = exactly as before. Zero overhead.
+apfel "What is 2+2?"
+```
+
+Ships with a calculator MCP server at `mcp/calculator/`. See [MCP docs](docs/mcp-calculator.md) for details and how to build your own.
 
 ## OpenAI API Compatibility
 
