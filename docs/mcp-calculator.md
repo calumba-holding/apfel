@@ -28,6 +28,9 @@ apfel --chat --mcp ./mcp/calculator/server.py
 # Multiple MCP servers
 apfel --mcp ./calc.py --mcp ./weather.py "What is sqrt(2025)?"
 
+# Slow or remote MCP server - increase timeout (default: 5s, max: 300s)
+apfel --mcp-timeout 30 --mcp ./remote-server.py "hello"
+
 # No --mcp = exactly as before. Zero overhead.
 apfel "Hello"
 ```
@@ -180,6 +183,7 @@ apfel --mcp ./my-tool.py "question that needs the tool"
 - **One tool call per turn.** Multi-tool chains require multiple round trips.
 - **No guaranteed schema compliance.** The model follows schemas loosely. Your server must handle unexpected argument formats.
 - **No streaming for tool calls.** Tool call responses are always non-streaming.
+- **Default 5s timeout.** MCP startup and tool calls timeout after 5 seconds. Use `--mcp-timeout <seconds>` or `APFEL_MCP_TIMEOUT` for slow/remote servers.
 - **Safety guardrails apply.** Apple's content filters can block tool calls containing flagged words.
 
 ## MCP protocol reference

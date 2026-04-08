@@ -668,6 +668,7 @@ From 29 requests during testing:
 | Tool detection overhead | negligible |
 | Requests/minute throughput | 10.5 |
 | Error rate | 2/29 (7%) - both guardrail blocks |
+| MCP timeout | 5s default (`--mcp-timeout` / `APFEL_MCP_TIMEOUT` to change) |
 
 ---
 

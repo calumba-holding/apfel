@@ -42,6 +42,9 @@ APFEL_TOKEN=$(uuidgen) brew services start apfel
 APFEL_MCP="/path/to/server.py" brew services start apfel
 APFEL_MCP="/path/a.py:/path/b.py" brew services start apfel
 
+# MCP timeout for slow/remote servers (default: 5s, max: 300s)
+APFEL_MCP_TIMEOUT=30 APFEL_MCP="/path/to/remote-server.py" brew services start apfel
+
 # System prompt
 APFEL_SYSTEM_PROMPT="Be concise" brew services start apfel
 
