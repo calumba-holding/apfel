@@ -279,16 +279,17 @@ make release TYPE=minor         # minor (1.0.x -> 1.1.0)
 make release TYPE=major         # major (1.x.y -> 2.0.0)
 ```
 
-This dispatches the **Publish Release** GitHub Actions workflow which:
+This runs locally (not on GitHub Actions - GitHub runners lack Apple Intelligence). The script (`scripts/publish-release.sh`) does everything:
 
-1. Bumps `.version` (patch/minor/major)
-2. Regenerates `Sources/BuildInfo.swift` and README badge
+1. Preflight checks (clean tree, on main, up to date with origin)
+2. Bumps `.version` (patch/minor/major)
 3. Builds the release binary
-4. Runs unit tests (335+)
-5. Runs integration tests (7 suites: cli_e2e, performance, openai_client, openapi_spec, security, mcp_server, openapi_conformance)
+4. Runs ALL unit tests (362+)
+5. Runs ALL 7 integration test suites with real Apple Intelligence (cli_e2e, performance, openai_client, openapi_spec, security, mcp_server, openapi_conformance)
 6. Commits `.version`, `README.md`, `Sources/BuildInfo.swift` and pushes to `main`
 7. Creates git tag (`v<version>`) and pushes it
 8. Packages tarball and publishes GitHub Release with changelog
+9. Updates the Homebrew tap formula
 
 ### After releasing
 
@@ -334,7 +335,6 @@ The custom tap (`Arthur-Ficial/homebrew-tap`) is a secondary channel for apfel-f
 
 - `macos-26` runner. Selects latest Xcode automatically.
 - SDK 26.4+ required for FoundationModels token-counting APIs.
-- **CI workflow** (`ci.yml`): build + unit tests + integration tests (6 suites) on every push/PR to main.
-- **Publish Release workflow** (`publish-release.yml`): full qualification (unit + 7 integration suites) + release + GitHub Release. Triggered by `make release`.
-- No secrets required for CI. Release workflow requires `HOMEBREW_TAP_PUSH_TOKEN` for tap updates (fine-grained token with Contents R/W on `Arthur-Ficial/homebrew-tap`). homebrew-core updates automatically via autobump.
+- **CI workflow** (`ci.yml`): build + unit tests + structural integration tests on every push/PR to main. GitHub runners lack Apple Intelligence, so model-dependent tests are skipped in CI.
+- **Releases run locally** via `make release` (`scripts/publish-release.sh`). This runs the full 7-suite integration test qualification on a Mac with Apple Intelligence. GitHub Actions cannot do this.
 - Release docs: [docs/release.md](docs/release.md)

@@ -118,22 +118,15 @@ update-readme:
 	sed -i '' 's/Version [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/Version '"$$v"'/' README.md; \
 	sed -i '' 's/version-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*-blue/version-'"$$v"'-blue/' README.md
 
-# --- One-command release (triggers GitHub Actions) ---
+# --- One-command release (runs locally with full test qualification) ---
+# GitHub-hosted runners lack Apple Intelligence, so releases run locally.
 # Usage:
 #   make release              # patch bump (default)
 #   make release TYPE=minor   # minor bump
 #   make release TYPE=major   # major bump
 TYPE ?= patch
 release:
-	@echo "Triggering Publish Release workflow ($(TYPE))..."
-	@gh workflow run publish-release.yml --field release_type=$(TYPE) --repo Arthur-Ficial/apfel
-	@echo ""
-	@echo "Workflow dispatched. Monitor at:"
-	@echo "  https://github.com/Arthur-Ficial/apfel/actions/workflows/publish-release.yml"
-	@echo ""
-	@echo "After it completes (~3 min), verify:"
-	@echo "  brew update && brew upgrade apfel && apfel --version"
-	@echo "  ./scripts/post-release-verify.sh"
+	@scripts/publish-release.sh $(TYPE)
 
 # --- Pre-release qualification ---
 
