@@ -138,6 +138,8 @@ When a new issue comes in, follow this process:
 
 When a PR is opened, follow this process. Scale the rigor to the PR type - docs-only PRs skip the security audit and test coverage steps, code PRs get the full treatment.
 
+**Automated first-responder:** `Arthur-Ficial/apfel` has a Claude Code routine (`.claude/routines/02-pr-auto-review.md`) that runs this entire process on `pull_request.opened` / `pull_request.synchronize` and posts a `COMMENTED` review. The routine cannot `--approve`, cannot merge, cannot run `make test` (no Apple Intelligence on cloud runners), and cannot cut releases. It is a first-pass safety net, not a replacement for human judgement. Franz still merges, Franz still releases — always. See [docs/routines.md](docs/routines.md) and [.claude/routines/README.md](.claude/routines/README.md).
+
 ### 1. Fetch everything
 
 ```bash
