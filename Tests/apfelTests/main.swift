@@ -95,6 +95,12 @@ suite("BodyLimitsTests") { runBodyLimitsTests() }
 suite("TraceBufferTests") { runTraceBufferTests() }
 suite("StreamTaskBoxTests") { runStreamTaskBoxTests() }
 suite("ManPageTests") { runManPageTests() }
+suite("StreamCleanupTests") { runStreamCleanupTests() }
+suite("BufferedLineReaderConcurrencyTests") { runBufferedLineReaderConcurrencyTests() }
+suite("DebugFlagBaselineTests") { runDebugFlagBaselineTests() }
+suite("ApfelErrorMessageTests") { runApfelErrorMessageTests() }
+suite("OpenAIWireFormatTests") { runOpenAIWireFormatTests() }
+suite("ApfelCorePublicAPIUsageTests") { runApfelCorePublicAPIUsageTests() }
 
 // MARK: - Summary
 
