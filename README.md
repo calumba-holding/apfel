@@ -26,15 +26,25 @@ Tool calling works in all contexts. 4096-token context.
 
 ## Requirements & Install
 
-macOS 26 Tahoe+, Apple Silicon (M1+), [Apple Intelligence enabled](https://support.apple.com/en-us/121115). Building from source needs Command Line Tools with the macOS 26.4 SDK (Swift 6.3) - no Xcode.
+macOS 26 Tahoe+, Apple Silicon (M1+), [Apple Intelligence enabled](https://support.apple.com/en-us/121115).
 
 ```bash
-brew install apfel                          # homebrew-core
-brew install Arthur-Ficial/tap/apfel        # tap, zero-latency
+brew install apfel
+```
+
+Update:
+
+```bash
+brew upgrade apfel
+```
+
+Build from source (Command Line Tools with macOS 26.4 SDK / Swift 6.3, no Xcode):
+
+```bash
 git clone https://github.com/Arthur-Ficial/apfel.git && cd apfel && make install
 ```
 
-Update: `brew upgrade apfel` or `apfel --update`. Troubleshooting: [docs/install.md](docs/install.md).
+Same-day tap, Mint, mise, troubleshooting: [docs/install.md](docs/install.md).
 
 ## Quick Start
 

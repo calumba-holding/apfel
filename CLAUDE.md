@@ -64,6 +64,7 @@ The README.md mirrors this priority - **violating this structure is a bug.**
 ### Documentation style:
 
 - **Links in docs and README:** Always use the URL/path as the anchor text, not generic phrases like "full guide" or "click here". Example: `[docs/background-service.md](docs/background-service.md)` not `[full guide](docs/background-service.md)`.
+- **One code block, one purpose - never mix mutually-exclusive commands.** A fenced code block must be safe to copy-paste verbatim into a terminal: every line either runs in sequence as part of the same workflow, or the block contains only one command. Alternatives (e.g. `brew install apfel` vs `brew install Arthur-Ficial/tap/apfel` vs `git clone … && make install`) get **separate** fenced blocks with a one-line prose lead-in describing when to use that block. Inline `#` comments labelling alternatives inside one block are not a substitute - users hit "copy" and run the lot. This applies to README.md, every file under `docs/`, and any future user-facing surface.
 
 ## Architecture
 

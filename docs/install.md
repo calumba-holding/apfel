@@ -14,6 +14,12 @@
 brew install apfel
 ```
 
+Same-day releases (homebrew-core autobump can lag up to ~24h):
+
+```bash
+brew install Arthur-Ficial/tap/apfel
+```
+
 No build tools needed. See [brew-install.md](brew-install.md) for troubleshooting.
 
 ## Option 2: Nix (nixpkgs) - pending
