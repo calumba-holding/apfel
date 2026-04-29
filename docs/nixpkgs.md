@@ -1,6 +1,6 @@
 # nixpkgs distribution
 
-apfel ships on [nixpkgs](https://github.com/NixOS/nixpkgs) under the attribute `apfel-llm`. This page explains the name choice, how the automation works, and how to test or repair the package locally.
+apfel ships on [nixpkgs](https://github.com/NixOS/nixpkgs) under the attribute `apfel-llm`. This page covers the install, the name choice, and how new versions land upstream.
 
 ## Install (end users)
 
@@ -16,7 +16,7 @@ The binary on your `$PATH` is still `apfel` - only the install-time attribute is
 
 nixpkgs already has an unrelated package at [`pkgs/by-name/ap/apfel`](https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/ap/apfel/package.nix): the [scarrazza/apfel](https://github.com/scarrazza/apfel) particle-physics PDF Evolution Library (GPL3, maintained by `veprbl`). The name was taken years before apfel existed in its AI form, so nixpkgs convention requires disambiguation.
 
-The disambiguator that landed upstream is `apfel-llm` (via [NixOS/nixpkgs#508084](https://github.com/NixOS/nixpkgs/pull/508084)). An earlier proposal used `apfel-ai`, but the upstream maintainer chose `-llm` as the more descriptive suffix. The binary on `$PATH` is still `apfel` either way - only the install attribute differs.
+The disambiguator that landed upstream is `apfel-llm` (via [NixOS/nixpkgs#508084](https://github.com/NixOS/nixpkgs/pull/508084)). The binary on `$PATH` is still `apfel` either way - only the install attribute differs.
 
 ## Why a pre-built binary derivation
 
@@ -26,99 +26,58 @@ The derivation installs the same signed release tarball that Homebrew consumes (
 
 If nixpkgs' darwin stdenv later gains macOS 26 SDK support, we switch to a source build in a follow-up PR.
 
-## Update automation (two layers)
+## How new versions land
 
-Every `make release` that publishes a new GitHub Release is picked up by both layers in parallel - whichever opens the bump PR first wins; the second detects the PR already exists and no-ops.
+We do **not** run our own auto-bump workflow. The package.nix uses `passthru.updateScript = nix-update-script { }`, which feeds the standard nixpkgs update bots and contributor tooling. New apfel releases land in nixpkgs through one of:
 
-### Layer 1 - community `r-ryantm` bot
+1. **[`r-ryantm`](https://github.com/ryantm/nixpkgs-update)** - the official nixpkgs update bot. Scans packages weekly and opens bump PRs automatically. Latency: ~7 days.
+2. **Community contributors** - anyone with a nixpkgs checkout can bump the version + hash. We have a regular contributor ([@arunoruto](https://github.com/arunoruto)) who has been doing this proactively.
+3. **Manual self-bump** - if both above are slow and you need a fresh version, the workflow is below.
 
-nixpkgs has a well-established community [update bot](https://github.com/ryantm/nixpkgs-update) that scans packages weekly for upstream version changes, computes the new SRI hash, and opens a bump PR with CI. Our `package.nix` uses `passthru.updateScript = nix-update-script { }`, which `r-ryantm` reads to drive the update. No action from us.
+This matches the standard nixpkgs maintenance model: the package opts into automation, and human contributors fill the gaps. We tried adding our own release-triggered workflow but it required cross-org GitHub auth that fine-grained PATs cannot provide; the pragmatic right answer is to use the channels nixpkgs already has.
 
-Expected latency: within ~7 days of release.
+## Manual self-bump (if you ever need it)
 
-### Layer 2 - our own workflow
-
-[`.github/workflows/bump-nixpkgs.yml`](../.github/workflows/bump-nixpkgs.yml) fires on every `release: published` event from `make release`. It:
-
-1. Checks out a fresh copy of `Arthur-Ficial/nixpkgs` (our fork, synced with upstream master).
-2. Runs [`scripts/bump-nixpkgs.sh`](../scripts/bump-nixpkgs.sh) to rewrite `version` and `hash` in `pkgs/by-name/ap/apfel-llm/package.nix`.
-3. Commits on a branch `apfel-llm-<version>`, force-pushes to the fork.
-4. Opens a PR on `NixOS/nixpkgs` (or updates the existing one if already open).
-
-Expected latency: within ~5 minutes of release.
-
-The workflow also supports `workflow_dispatch` with an explicit version, so you can trigger it manually:
+On any machine with `nix` and `git`:
 
 ```bash
-gh workflow run bump-nixpkgs.yml --repo Arthur-Ficial/apfel -f version=1.2.3
+git clone --depth 1 https://github.com/NixOS/nixpkgs.git /tmp/nixpkgs-bump
+cd /tmp/nixpkgs-bump
+
+# Fork NixOS/nixpkgs to your account first via the GitHub UI, then:
+git remote add fork git@github.com:YOUR_USER/nixpkgs.git
+
+VERSION="X.Y.Z"   # e.g. 1.3.4
+URL="https://github.com/Arthur-Ficial/apfel/releases/download/v${VERSION}/apfel-${VERSION}-arm64-macos.tar.gz"
+HASH=$(nix-prefetch-url --type sha256 "$URL" | xargs nix-hash --to-sri --type sha256)
+
+git checkout -b "apfel-llm-${VERSION}"
+sed -i.bak -E "s/version = \"[^\"]+\"/version = \"${VERSION}\"/; s|hash = \"sha256-[^\"]+\"|hash = \"${HASH}\"|" \
+  pkgs/by-name/ap/apfel-llm/package.nix
+rm pkgs/by-name/ap/apfel-llm/package.nix.bak
+
+git add pkgs/by-name/ap/apfel-llm/package.nix
+git commit -m "apfel-llm: ${VERSION}"
+git push fork "apfel-llm-${VERSION}"
+
+gh pr create --repo NixOS/nixpkgs \
+  --head "YOUR_USER:apfel-llm-${VERSION}" \
+  --base master \
+  --title "apfel-llm: ${VERSION}" \
+  --body "Routine version bump."
 ```
 
-## The `NIXPKGS_BUMP_PAT` secret
-
-Layer 2 needs a GitHub token with two scopes:
-
-- `contents:write` on `Arthur-Ficial/nixpkgs` (the fork we push branches to)
-- `pull-requests:write` on `NixOS/nixpkgs` (to open the bump PR)
-
-A fine-grained Personal Access Token is the right shape. **Setup is a one-time action:**
-
-1. Create the token at <https://github.com/settings/personal-access-tokens/new> with:
-   - Resource owner: `Arthur-Ficial`
-   - Repository access: Only select repositories: `Arthur-Ficial/nixpkgs`
-   - Repository permissions: Contents (Read and write), Pull requests (Read and write), Metadata (Read)
-   - Also grant a public-repo token (or fine-grained) with `pull-requests:write` on `NixOS/nixpkgs` - or use classic PAT with `public_repo` scope limited to PR creation.
-2. Store it in pass:
-   ```bash
-   pass insert github/nixpkgs-bump-pat
-   ```
-3. Add it to the apfel repo secrets:
-   ```bash
-   gh secret set NIXPKGS_BUMP_PAT --repo Arthur-Ficial/apfel --body "$(pass show github/nixpkgs-bump-pat)"
-   ```
-
-If the secret is missing, the workflow logs a warning and no-ops rather than failing - Layer 1 (r-ryantm) still covers the release, just with higher latency.
-
 ## Testing the package locally
-
-On any Mac with Nix installed (we use the Determinate Systems installer on Apple Silicon):
 
 ```bash
 git clone --depth 1 https://github.com/NixOS/nixpkgs.git /tmp/nixpkgs-test
 cd /tmp/nixpkgs-test
 nix-build -A apfel-llm --no-out-link
 
-# The resulting binary:
 ls /nix/store/*-apfel-llm-*/bin/apfel
 ```
 
 Run it: `/nix/store/...-apfel-llm-.../bin/apfel --version`.
-
-To test a version bump before pushing, point `--file` at your local checkout:
-
-```bash
-./scripts/bump-nixpkgs.sh --version 1.2.3 \
-  --file /tmp/nixpkgs-test/pkgs/by-name/ap/apfel-llm/package.nix \
-  --dry-run
-```
-
-## Manual fallback (if both layers fail)
-
-Very rare, but: if r-ryantm is down and the workflow is broken, you can bump by hand:
-
-```bash
-cd /tmp/nixpkgs-test
-git fetch origin master && git checkout -B apfel-llm-manual origin/master
-
-/path/to/apfel/scripts/bump-nixpkgs.sh \
-  --version 1.2.3 \
-  --file pkgs/by-name/ap/apfel-llm/package.nix
-
-git add pkgs/by-name/ap/apfel-llm/package.nix
-git commit -m "apfel-llm: 1.2.3"
-git push fork apfel-llm-manual   # where `fork` is Arthur-Ficial/nixpkgs
-gh pr create --repo NixOS/nixpkgs --head Arthur-Ficial:apfel-llm-manual --base master \
-  --title "apfel-llm: 1.2.3"
-```
 
 ## Tracking
 

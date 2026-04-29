@@ -29,7 +29,7 @@ If you update `_golden-goal.md`, you must re-paste into **every** live routine. 
 ## Setting up a new routine
 
 1. Confirm the routine's prompt is committed to this directory and reviewed (same bar as code).
-2. Ensure the Claude GitHub App is installed on `Arthur-Ficial/apfel` **only**, with minimum permissions: Contents (Read), Issues (Read + Write), Pull requests (Read + Write). Verify it is NOT on `Arthur-Ficial/homebrew-tap`, `Arthur-Ficial/nixpkgs`, or any release-side repo.
+2. Ensure the Claude GitHub App is installed on `Arthur-Ficial/apfel` **only**, with minimum permissions: Contents (Read), Issues (Read + Write), Pull requests (Read + Write). Verify it is NOT on `Arthur-Ficial/homebrew-tap` or any release-side repo.
 3. Go to [claude.ai/code/routines](https://claude.ai/code/routines) → New routine.
 4. Name it exactly as the filename minus extension (`02-pr-auto-review`).
 5. Trigger: the GitHub trigger described at the top of the routine file.
@@ -107,7 +107,7 @@ If any routine run ever does something on this list, disable the routine IMMEDIA
 - Clicks `gh pr review --approve` or `gh pr merge`
 - Pushes a commit to `main`
 - Runs `make release`, creates a GitHub Release, or pushes a git tag
-- Touches `Arthur-Ficial/homebrew-tap`, `Arthur-Ficial/nixpkgs`, or `NixOS/nixpkgs`
+- Touches `Arthur-Ficial/homebrew-tap` or `NixOS/nixpkgs`
 - Modifies `.version`, `Sources/BuildInfo.swift`, or the README badge directly
 - Attempts any action that would change what end users install via Homebrew or Nix
 

@@ -328,9 +328,9 @@ apfel ships through three channels. All pull the same signed tarball from each G
 
 - **homebrew-core** - `brew install apfel`. Autobump detects new releases; latency ~24h. We do not maintain the formula.
 - **Arthur-Ficial/homebrew-tap** - `brew install Arthur-Ficial/tap/apfel`. Synchronous, pushed as part of `make release`. Secondary channel; also houses apfel-family tools (apfel-chat, apfel-clip, apfel-mcp, etc.).
-- **nixpkgs** - `nix profile install nixpkgs#apfel-llm`. Name is `apfel-llm` because nixpkgs already has an unrelated physics `apfel` package and the disambiguator landed upstream as `apfel-llm` (PR NixOS/nixpkgs#508084). Two-layer automation: community r-ryantm bot (~weekly) plus our `.github/workflows/bump-nixpkgs.yml` on every release (~5 min). See [docs/nixpkgs.md](docs/nixpkgs.md). Requires the `NIXPKGS_BUMP_PAT` repo secret.
+- **nixpkgs** - `nix profile install nixpkgs#apfel-llm`. Name is `apfel-llm` because nixpkgs already has an unrelated physics `apfel` package and the disambiguator landed upstream as `apfel-llm` (PR NixOS/nixpkgs#508084). Bumps come from the community `r-ryantm` bot (~weekly) and contributors with a nixpkgs checkout. We do not run our own auto-bump workflow - the package's `passthru.updateScript` is enough. See [docs/nixpkgs.md](docs/nixpkgs.md).
 - Emergency Homebrew bump: `brew bump-formula-pr apfel --url=<tarball-url> --sha256=<hash>`
-- Emergency nixpkgs bump: run `scripts/bump-nixpkgs.sh` against a local nixpkgs clone and open a PR manually.
+- Emergency nixpkgs bump: see [docs/nixpkgs.md](docs/nixpkgs.md) "Manual self-bump" - clone nixpkgs, edit `pkgs/by-name/ap/apfel-llm/package.nix`, open a PR. Normally not needed; r-ryantm handles it weekly.
 
 ### Do NOT manually
 

@@ -52,4 +52,4 @@ All four routines share the same identity (Arthur Ficial voice - warm, short, sp
 
 ## Security note
 
-The Claude GitHub App is installed on `Arthur-Ficial/apfel` **only**, with minimum GitHub permissions: Contents (Read), Issues (Read + Write), Pull requests (Read + Write). It is explicitly NOT installed on `Arthur-Ficial/homebrew-tap`, `Arthur-Ficial/nixpkgs`, or `NixOS/nixpkgs` - those are release-side repos and routines must never reach them.
+The Claude GitHub App is installed on `Arthur-Ficial/apfel` **only**, with minimum GitHub permissions: Contents (Read), Issues (Read + Write), Pull requests (Read + Write). It is explicitly NOT installed on `Arthur-Ficial/homebrew-tap` or `NixOS/nixpkgs` - those are release-side repos and routines must never reach them.

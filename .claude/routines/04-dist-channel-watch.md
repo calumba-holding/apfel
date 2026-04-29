@@ -82,17 +82,7 @@ brew bump-formula-pr apfel \
 
 (SHA256 from the release asset: `<computed-sha256>`)
 
-**nixpkgs:** the `bump-nixpkgs.yml` workflow should have fired on release:published. If not, either `r-ryantm` will pick it up within the week or you can trigger manually:
-
-\```bash
-gh workflow run bump-nixpkgs.yml --repo Arthur-Ficial/apfel -f version=<canonical>
-\```
-
-Or from a local nixpkgs checkout:
-
-\```bash
-./scripts/bump-nixpkgs.sh --version <canonical> --file pkgs/by-name/ap/apfel-llm/package.nix
-\```
+**nixpkgs:** `r-ryantm` picks up new versions weekly via the package's `passthru.updateScript`. If it has not fired and we are >7 days behind, anyone with a nixpkgs checkout can manually open a bump PR (see [docs/nixpkgs.md](../../docs/nixpkgs.md) - "Manual self-bump"). We do not maintain our own release-triggered workflow.
 
 ## What I did NOT do
 
@@ -121,11 +111,11 @@ Cheers, Arthur
 ### Hard limits - repeat
 
 - Never run `brew bump-formula-pr`, never push to `Arthur-Ficial/homebrew-tap`.
-- Never run `./scripts/bump-nixpkgs.sh` to actually bump - only reference it in the issue body as a suggestion for Franz.
+- Never run a manual nixpkgs bump from the routine - only point Franz at [docs/nixpkgs.md](../../docs/nixpkgs.md) "Manual self-bump" if a bump is genuinely needed.
 - Never create PRs against homebrew-core or nixpkgs from this routine.
 - Never edit the formula or package.nix.
 - Never close any issue.
-- Fetch only public endpoints - no authenticated reads of tap or nixpkgs fork from this routine.
+- Fetch only public endpoints - no authenticated reads of the tap from this routine.
 
 ### Exit criteria
 

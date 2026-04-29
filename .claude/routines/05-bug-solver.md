@@ -67,7 +67,7 @@ Once authorised:
 
 6. **Write the fix.** Constraints:
    - **Minimal diff.** Touch only the files needed for this specific fix. If you find yourself changing more than 3 files, stop and reconsider - scope is too broad.
-   - **Never touch these in an auto-drafted PR:** `.version`, `Sources/BuildInfo.swift`, README version badge, `.github/workflows/*.yml`, `scripts/publish-release.sh`, `scripts/release-preflight.sh`, `scripts/bump-nixpkgs.sh`, `scripts/write-homebrew-formula.sh`, `STABILITY.md`, `SECURITY.md`, `Package.swift` (no new dependencies).
+   - **Never touch these in an auto-drafted PR:** `.version`, `Sources/BuildInfo.swift`, README version badge, `.github/workflows/*.yml`, `scripts/publish-release.sh`, `scripts/release-preflight.sh`, `scripts/write-homebrew-formula.sh`, `STABILITY.md`, `SECURITY.md`, `Package.swift` (no new dependencies).
    - **Never add a new dependency.** If a fix seems to require a new package, stop and comment instead.
    - **Follow apfel code style.** Swift 6 strict concurrency. Error types in `Sources/Core/ApfelError.swift`. No `@unchecked Sendable` without explicit justification. Proper retry via `withRetry` from `Sources/Core/Retry.swift`.
    - **Write a test first.** Per CLAUDE.md: bugs get TDD. Add the failing test in the appropriate suite (`Tests/apfelTests/*Tests.swift` for pure-core, `Tests/integration/` for server/CLI). Use the existing conftest pattern - no standalone scripts.
