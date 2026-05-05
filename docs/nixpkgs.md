@@ -28,15 +28,33 @@ If nixpkgs' darwin stdenv later gains macOS 26 SDK support, we switch to a sourc
 
 ## How new versions land
 
-We do **not** run our own auto-bump workflow. The package.nix uses `passthru.updateScript = nix-update-script { }`, which feeds the standard nixpkgs update bots and contributor tooling. New apfel releases land in nixpkgs through one of:
+`make release` opens a nixpkgs PR automatically as its final step. r-ryantm and community contributors are the safety net.
 
-1. **[`r-ryantm`](https://github.com/ryantm/nixpkgs-update)** - the official nixpkgs update bot. Scans packages weekly and opens bump PRs automatically. Latency: ~7 days.
-2. **Community contributors** - anyone with a nixpkgs checkout can bump the version + hash. We have a regular contributor ([@arunoruto](https://github.com/arunoruto)) who has been doing this proactively.
-3. **Manual self-bump** - if both above are slow and you need a fresh version, the workflow is below.
+In order:
 
-This matches the standard nixpkgs maintenance model: the package opts into automation, and human contributors fill the gaps. We tried adding our own release-triggered workflow but it required cross-org GitHub auth that fine-grained PATs cannot provide; the pragmatic right answer is to use the channels nixpkgs already has.
+1. **`make release`** runs `scripts/publish-nixpkgs-bump.sh` after the GitHub Release and Homebrew tap are updated. The script forks `NixOS/nixpkgs` to `Arthur-Ficial/nixpkgs` (one-time), syncs from upstream master, branches `apfel-llm-${VERSION}`, edits `pkgs/by-name/ap/apfel-llm/package.nix`, pushes, and opens a PR on `NixOS/nixpkgs`. Idempotent at every layer (fork, branch, PR), and **non-fatal**: a bump failure does not fail the release.
+2. **[`r-ryantm`](https://github.com/ryantm/nixpkgs-update)** - the official nixpkgs update bot. Scans weekly via `passthru.updateScript = nix-update-script { }`. Picks up anything our local script missed (e.g. release on a machine without `gh` logged in). Latency: ~7 days.
+3. **Community contributors** - anyone with a nixpkgs checkout can bump the version + hash if both above are slow.
 
-## Manual self-bump (if you ever need it)
+### Why the bump runs locally, not in GitHub Actions
+
+We tried a release-triggered GitHub Actions workflow (`.github/workflows/bump-nixpkgs.yml`, ripped out in commit 77dd322) and it didn't work cleanly: opening a PR on `NixOS/nixpkgs` requires a classic PAT with `public_repo` scope, fine-grained tokens cannot do cross-org `createPullRequest`, and pushing to the fork's `.github/workflows/` requires extra `workflow` scope. That's a long-lived secret + scope expansion we didn't want.
+
+`make release` already runs locally (GitHub-hosted runners lack Apple Intelligence). Locally we have an interactive `gh auth login` session for the Arthur-Ficial account with full cross-org PR scope. No stored credential, no workflow-scope hack - just call `gh` from the script.
+
+## Running the bump on its own
+
+```bash
+./scripts/publish-nixpkgs-bump.sh                   # uses .version
+./scripts/publish-nixpkgs-bump.sh --version 1.3.3   # explicit (catch-up bumps)
+./scripts/publish-nixpkgs-bump.sh --dry-run         # no fork/push/PR
+```
+
+Prerequisites: `nix` (for `nix-prefetch-url`), `gh` CLI logged into Arthur-Ficial, `python3`, `git`. The script verifies these and skips with a warning if anything is missing - it never blocks the release.
+
+The fork `Arthur-Ficial/nixpkgs` is created on first run via `gh repo fork`. The local checkout lives at `~/dev/nixpkgs-bump` (override with `NIXPKGS_BUMP_DIR`).
+
+## Manual self-bump (recovery, if the script breaks)
 
 On any machine with `nix` and `git`:
 
