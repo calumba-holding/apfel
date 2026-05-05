@@ -76,7 +76,7 @@ if ! gh repo view "$FORK" >/dev/null 2>&1; then
   if $dry_run; then
     info "[dry-run] would: gh repo fork $UPSTREAM --clone=false"
   else
-    gh repo fork "$UPSTREAM" --clone=false --remote=false >/dev/null
+    gh repo fork "$UPSTREAM" --clone=false >/dev/null
     # GitHub fork creation is async; wait for it to be queryable.
     for i in $(seq 1 20); do
       if gh repo view "$FORK" >/dev/null 2>&1; then break; fi
@@ -88,12 +88,19 @@ fi
 
 # --- Maintain local checkout ---
 if [[ ! -d "$NIXPKGS_DIR/.git" ]]; then
-  info "Cloning fork to $NIXPKGS_DIR (one-time, ~1 min)..."
+  info "Cloning fork to $NIXPKGS_DIR (shallow, ~30s)..."
   if $dry_run; then
-    info "[dry-run] would: git clone --filter=blob:none $FORK $NIXPKGS_DIR"
+    info "[dry-run] would: git clone --depth 1 --single-branch --filter=blob:none $FORK $NIXPKGS_DIR"
   else
     mkdir -p "$(dirname "$NIXPKGS_DIR")"
-    git clone --filter=blob:none "https://github.com/$FORK.git" "$NIXPKGS_DIR" --quiet
+    # Shallow + blob filter keeps the clone under 100MB instead of multi-GB.
+    # nixpkgs has no submodules and we never need history past the tip.
+    git clone \
+      --depth 1 \
+      --single-branch \
+      --branch master \
+      --filter=blob:none \
+      "https://github.com/$FORK.git" "$NIXPKGS_DIR" --quiet
   fi
 fi
 
@@ -115,7 +122,8 @@ if ! $dry_run; then
   git config user.email "arti.ficial@fullstackoptimization.com"
 
   info "Syncing fork master with upstream..."
-  git fetch upstream master --quiet
+  # Shallow fetch to keep fast on repeat runs (nixpkgs has thousands of commits/day).
+  git fetch upstream master --depth 1 --quiet
   git checkout master --quiet 2>/dev/null || git checkout -b master upstream/master --quiet
   git reset --hard upstream/master --quiet
 
@@ -155,10 +163,14 @@ Release: https://github.com/Arthur-Ficial/apfel/releases/tag/v${version}
 
 This PR was opened automatically by \`scripts/publish-nixpkgs-bump.sh\` as a step of the apfel release flow. The package's \`passthru.updateScript\` (\`nix-update-script\`) would produce the same diff."
 
+  # gh CLI's --head filter takes a bare branch name; cross-org disambiguation
+  # comes from filtering on headRepositoryOwner.login afterwards.
   existing_pr=$(gh pr list --repo "$UPSTREAM" --state open \
-    --head "Arthur-Ficial:${branch}" --json url --jq '.[0].url' 2>/dev/null || true)
+    --head "$branch" \
+    --json url,headRepositoryOwner \
+    --jq ".[] | select(.headRepositoryOwner.login==\"Arthur-Ficial\") | .url" 2>/dev/null || true)
 
-  if [[ -n "$existing_pr" && "$existing_pr" != "null" ]]; then
+  if [[ -n "$existing_pr" ]]; then
     info "PR already open: $existing_pr"
   else
     info "Opening PR on $UPSTREAM..."
